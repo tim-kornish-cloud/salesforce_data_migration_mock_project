@@ -30,7 +30,7 @@ database = "Salesforce"
 num_of_records = 10
 
 # starting index to choose records
-record_start = 5
+record_start = 0
 
 # query string to select records from salesforce
 # before uploading with a delete  DML operation
@@ -46,7 +46,7 @@ success_file = dir_path + "\\Output\\INSERT\\SUCCESS_Insert_" + environment + "_
 fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Insert_" + environment + "_" + database + ".csv"
 
 # set input path for mock data csv
-input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_unit_test.csv"
+input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_Multi_Data_Types.csv"
 
 # load credentials for Salesforce and the Dev environement
 # I use this method instead of a hardcoding credentials and instead of a
@@ -66,6 +66,15 @@ sf = SF_Utils.login_to_salesForce(username, password, token)
 # read mock data csv from mockaroo.com into a pandas datafrome
 # file contains 1000 records
 mock_df = pd.read_csv(input_csv_file)
+
+# create column: migrated_record__c and set to true for all records migrated into salesforce
+mock_df["Migrated_Record__c"] = True
+
+# drop IsActive column since no longer exists on Account object by default, can later add custom field for This
+mock_df.drop(['IsActive', 'CreatedDate'], axis=1, inplace = True)
+
+# rename AmountPaid to Amount_Paid__c
+mock_df.rename(columns = {"AmountPaid" : "Amount_Paid__c"}, inplace = True)
 
 # select only 10 records
 df_to_upload = mock_df.iloc[record_start:record_start+num_of_records]
