@@ -46,7 +46,7 @@ success_file = dir_path + "\\Output\\INSERT\\SUCCESS_Insert_" + environment + "_
 fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Insert_" + environment + "_" + database + ".csv"
 
 # set input path for mock data csv
-input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_Multi_Data_Types.csv"
+input_csv_file = dir_path + ".\\MockData\\MOCK_DATA_Accounts.csv"
 
 # load credentials for Salesforce and the Dev environement
 # I use this method instead of a hardcoding credentials and instead of a
