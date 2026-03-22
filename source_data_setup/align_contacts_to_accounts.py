@@ -54,9 +54,9 @@ contact_3_df = pd.read_csv(contact_3_csv_file)
 account_id_df = account_df[["id", "account_number_external_id"]]
 
 # merge the account number external Id to the contact file
-contact_with_account_1_df = pd.merge(account_df, contact_1_df, on = "id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
-contact_with_account_2_df = pd.merge(account_df, contact_2_df, on = "id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
-contact_with_account_3_df = pd.merge(account_df, contact_3_df, on = "id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
+contact_with_account_1_df = pd.merge(account_id_df, contact_1_df, on = "id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
+contact_with_account_2_df = pd.merge(account_id_df, contact_2_df, on = "id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
+contact_with_account_3_df = pd.merge(account_id_df, contact_3_df, on = "id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
 
 #print columns
 print(contact_with_account_1_df.columns)
