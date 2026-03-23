@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import os
 
-
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -65,8 +64,12 @@ print(contract_with_account_1_df.head())
 # concat all dfs to create a single csv of contracts to pull from
 contracts_df = pd.concat([contract_with_account_1_df, contract_with_account_2_df, contract_with_account_3_df], axis = 0)
 
+# remove id column, no longer needed
 contracts_df.drop('id', axis = 1, inplace = True)
+
+# set start date column to be a datetime datatype to set up end_date column
 contracts_df['start_date'] = pd.to_datetime(contracts_df['start_date'])
+# set up end_date one year in the future minus 1 day
 contracts_df['end_date'] = contracts_df['start_date'] + pd.offsets.DateOffset(years=1) - pd.Timedelta(days=1)
 
 
@@ -75,4 +78,5 @@ print(len(contracts_df))
 print(contracts_df.columns)
 print(contracts_df.head())
 
+# output contracts dataframe to a new csv
 contracts_df.to_csv(contract_list_csv_file, index = False)
