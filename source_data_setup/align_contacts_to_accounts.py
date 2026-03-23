@@ -6,11 +6,9 @@ Description: take mock data of accounts and contacts from mockaroo and use the
              then concat all contact csvs into a single file.
 
 """
-
 import numpy as np
 import pandas as pd
 import os
-
 
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -65,11 +63,13 @@ print(contact_with_account_1_df.head())
 # concat all dfs to create a single csv of contacts to pull from
 contacts_df = pd.concat([contact_with_account_1_df, contact_with_account_2_df, contact_with_account_3_df], axis = 0)
 
+# remove id column, no longer needed after merges
 contacts_df.drop('id', axis = 1, inplace = True)
 
-#print columns
+# print columns
 print(len(contacts_df))
 print(contacts_df.columns)
 print(contacts_df.head())
 
+# output contacts concatenated files into a single new csv
 contacts_df.to_csv(contact_list_csv_file, index = False)
