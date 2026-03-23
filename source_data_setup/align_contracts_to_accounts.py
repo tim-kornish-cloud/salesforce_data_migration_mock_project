@@ -66,6 +66,9 @@ print(contract_with_account_1_df.head())
 contracts_df = pd.concat([contract_with_account_1_df, contract_with_account_2_df, contract_with_account_3_df], axis = 0)
 
 contracts_df.drop('id', axis = 1, inplace = True)
+contracts_df['start_date'] = pd.to_datetime(contracts_df['start_date'])
+contracts_df['end_date'] = contracts_df['start_date'] + pd.offsets.DateOffset(years=1) - pd.Timedelta(days=1)
+
 
 #print columns
 print(len(contracts_df))
