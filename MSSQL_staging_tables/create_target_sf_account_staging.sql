@@ -16,7 +16,7 @@ CREATE TABLE [dbo].[STG_TARGET_SF_Accounts](
   [Name] [nvarchar](100) NOT NULL,
   [Industry] [nvarchar](50) NOT NULL,
   [AnnualRevenue] DECIMAL(16,2) NOT NULL,
-  [Account_Number_External_ID] [nvarchar](36) PRIMARY KEY,
+  [Account_Number_External_ID__c] [nvarchar](36) PRIMARY KEY,
   [NumberofLocations__c] INT NOT NULL,
   [NumberOfEmployees] INT NOT NULL,
   [SLA__c] [nvarchar](20) NOT NULL,
