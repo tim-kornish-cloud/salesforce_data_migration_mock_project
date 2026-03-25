@@ -44,6 +44,9 @@ account_csv_file = dir_path + ".\\MockData\\MOCK_DATA_Account.csv"
 # read mock data csv into pandas dataframe
 account_df = pd.read_csv(account_csv_file)
 
+# fill na with blank string
+account_df = account_df.fillna('')
+
 # remove id column, no related column in tables
 account_df.drop('id', axis = 1, inplace = True)
 
