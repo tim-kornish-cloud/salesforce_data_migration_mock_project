@@ -13,8 +13,8 @@ GO
 
 CREATE TABLE [dbo].[STG_SOURCE_Accounts](
   [phone] [nvarchar](12) NOT NULL,
-  [company_name] [nvarchar](100) NOT NULL,
-  [industry] [nvarchar](50) NOT NULL,
+  [company_name] [nvarchar](200) NOT NULL,
+  [industry] [nvarchar](200) NOT NULL,
   [annual_revenue] DECIMAL(16,2) NOT NULL,
   [account_number_external_id] [nvarchar](36) PRIMARY KEY,
   [number_of_locations] INT NOT NULL,
