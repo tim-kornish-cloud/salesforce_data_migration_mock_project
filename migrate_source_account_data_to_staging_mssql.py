@@ -1,14 +1,10 @@
 """
 Author: Timothy Kornish
-CreatedDate: August - 24 - 2026
+CreatedDate: August - 25 - 2026
 Description: Load csv mock data into a pandas dataframes.
              log into a MySQL Database.
              insert each csv data set into respective tables
              - accounts
-             - contacts
-             - contracts
-             - contract_ilnes
-
 """
 
 import numpy as np
@@ -54,7 +50,6 @@ account_df = MySQL_Utils.query_mysql_return_dataframe(accounts_query, mysql_conn
 
 # fill na with blank string
 account_df = account_df.fillna('')
-
 
 # initiate an MS SQL connection and cursor to query with
 mssql_connection, mssql_cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
