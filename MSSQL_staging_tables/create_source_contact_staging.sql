@@ -13,12 +13,12 @@ GO
 
 CREATE TABLE [dbo].[STG_SOURCE_Contacts](
   [account_number_external_id] [nvarchar](36),
-  [first_name] [nvarchar](50) NOT NULL,
-  [last_name] [nvarchar](50) NOT NULL,
-  [email] [nvarchar](50) NOT NULL,
-  [title] [nvarchar](50) NOT NULL,
-  [department] [nvarchar](50) NOT NULL,
-  [languages] [nvarchar](50) NOT NULL,
+  [first_name] [nvarchar](200) NOT NULL,
+  [last_name] [nvarchar](200) NOT NULL,
+  [email] [nvarchar](200) NOT NULL,
+  [title] [nvarchar](200) NOT NULL,
+  [department] [nvarchar](200) NOT NULL,
+  [languages] [nvarchar](200) NOT NULL,
   PRIMARY KEY (first_name, last_name)
 
 ) ON [PRIMARY]
