@@ -1,9 +1,9 @@
 """
 Author: Timothy Kornish
 CreatedDate: August - 25 - 2026
-Description: Load csv mock data into a pandas dataframes.
-             log into a MySQL Database.
-             insert each csv data set into respective tables
+Description: log into a MySQL Database.
+             query contract records.
+             log into MSSQL staging database and insert records into staging table
              - accounts
 """
 
