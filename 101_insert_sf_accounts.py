@@ -27,6 +27,7 @@ Cred = Credentials()
 # declare which environment this script will perform operations against,
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
+database = 'mssql'
 
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -79,19 +80,26 @@ sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE Migrated_Record__c = True"
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
+
+print(account_query_results)
 # convert query results to a dataframe
 sf_accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
 # encode the dataframe before uploading to delete
 sf_accounts_df = Utils.encode_df(sf_accounts_df)
 
 # perform merge of staging accounts and salesforce accounts
+# cannot merge a df with empty df, check if any salesforce migrated records exist
+if len(sf_accounts_df) != 0:
+    # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
+    both_df, sf_only_accounts, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'inner', suffixes = ('_SF', '_STG'), indicator = True)
+else:
+    accounts_to_insert_df = stg_account_df
 
-# merge the csv data with the salesforce data to match SF Ids to the CSV accounts
-both_df, left_only_df, right_only_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'inner', suffixes = ('_SF', '_STG'), indicator = True)
-
+print(right_only_df.columns)
+print(right_only_df.head())
 # keep all net new records and drop any records existing in both systems
-accounts_to_insert_df = right_only_df.drop([], axis = 1)
+#accounts_to_insert_df = right_only_df.drop([], axis = 1)
 
 # insert net new records into salesforce account object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, 'Account', 'insert', success_file, fallout_file)
+#SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, 'Account', 'insert', success_file, fallout_file)
