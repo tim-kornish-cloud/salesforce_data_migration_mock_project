@@ -1636,7 +1636,7 @@ class Custom_Utilities:
             # log error when merging dataframes
             log.exception(f"[Error merging dataframes...{e}]")
 
-    def get_df_diffs(self, left, right, left_on, right_on, how ="inner", suffixes = ("_left", "_right"), indicator = True, validate = None, drop_merge = False):
+    def get_df_diffs(self, left, right, left_on, right_on, how ="outer", suffixes = ("_left", "_right"), indicator = True, validate = None, drop_merge = False):
         """
         Description: merge two dataframes based on list of columns to join on,
                      then return a tuple of 3 dataframes, 1 where records exist in both left and right,
