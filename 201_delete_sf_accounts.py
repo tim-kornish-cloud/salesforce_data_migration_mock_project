@@ -12,16 +12,12 @@ import os
 from custom_db_utilities import Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
 
-
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 SF_Utils = Salesforce_Utilities()
 # create and instance of the custom  utilities class
 Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
-
-# Set option to display all columns
-pd.set_option('display.max_columns', None)
 
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -36,7 +32,6 @@ sf_database = "Salesforce"
 success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Update_" + sf_environment + "_" + sf_database + ".csv"
 # fallout file path
 fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Update_" + sf_environment + "_" + sf_database + ".csv"
-
 
 # get credentials for salesforce login
 # get username from credentials
