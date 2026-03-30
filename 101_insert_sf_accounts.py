@@ -36,9 +36,9 @@ database = 'mssql'
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # success file path
-success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Update_" + environment + "_" + database + ".csv"
+success_file = dir_path + "\\Output\\INSERT\\SUCCESS_Update_" + environment + "_" + database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Update_" + environment + "_" + database + ".csv"
+fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Update_" + environment + "_" + database + ".csv"
 
 # initiate an MS SQL cursor to query with
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
