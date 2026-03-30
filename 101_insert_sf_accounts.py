@@ -24,6 +24,9 @@ Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
+# Set option to display all columns
+pd.set_option('display.max_columns', None)
+
 # declare which environment this script will perform operations against,
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
@@ -93,25 +96,33 @@ if len(sf_accounts_df) != 0:
     print("len != 0")
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
     both_df, sf_only_accounts, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
-    print("both_df-----")
-    print(len(both_df))
-    print(both_df.columns)
-    print(both_df.head())
-    print("sf_only_accounts-----")
-    print(len(sf_only_accounts))
-    print(sf_only_accounts.columns)
-    print(sf_only_accounts.head())
-    print("accounts_to_insert_df-----")
-    print(len(accounts_to_insert_df))
-    print(accounts_to_insert_df.columns)
-    print(accounts_to_insert_df.head())
+    # keep all net new records and drop any records existing in both systems
+    accounts_to_insert_df.drop(['Id', 'Account_Number_External_ID__c', '_merge'], axis = 1, inplace = True)
+
 else:
     print("len = 0")
     accounts_to_insert_df = stg_account_df
 
-# keep all net new records and drop any records existing in both systems
-#accounts_to_insert_df = right_only_df.drop([], axis = 1)
+# convert float values to ints
+accounts_to_insert_df['number_of_locations'] = accounts_to_insert_df['number_of_locations'].astype('int64')
+accounts_to_insert_df['sla_serial_number'] = accounts_to_insert_df['sla_serial_number'].astype('int64')
+accounts_to_insert_df['number_of_employees'] = accounts_to_insert_df['number_of_employees'].astype('int64')
+accounts_to_insert_df['annual_revenue'] = accounts_to_insert_df['annual_revenue'].astype('int64')
+
+# rename columns to salesforce column names
+accounts_to_insert_df.rename(columns={'phone' : 'Phone',
+                                      'company_name' : 'Name',
+                                      'industry' : 'Industry',
+                                      'annual_revenue' : 'AnnualRevenue',
+                                      'account_number_external_id' : 'Account_Number_External_ID__c',
+                                      'number_of_locations' : 'NumberofLocations__c',
+                                      'number_of_employees' : 'NumberOfEmployees',
+                                      'sla' : 'SLA__c',
+                                      'sla_serial_number' : 'SLASerialNumber__c'}, inplace=True)
+
+# add migrated record tag
+accounts_to_insert_df['Migrated_Record__c'] = True
 
 # insert net new records into salesforce account object
 # upload the records to salesforce
-#SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, 'Account', 'insert', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, 'Account', 'insert', success_file, fallout_file)
