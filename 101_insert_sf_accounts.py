@@ -1,11 +1,11 @@
 """
 Author: Timothy Kornish
-CreatedDate: August - 15 - 2025
-Description: Load a csv of mock data into a pandas dataframe.
-             log into a MSSQL table.
-             Perform select query on table and load records into pandas DataFrame
-             merge records from table and csv
-             print out which records exist in which tables based on join Id column
+CreatedDate: March - 30 - 2026
+Description: Log into mssql server, query account staging table records.
+             log into salesforce and query existing accounts.
+             merge records from both systems to determine what records exist
+             in both systems, and which records are net new.
+             insert net new records into salesforce account table.
 
 """
 
@@ -39,7 +39,6 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 success_file = dir_path + "\\Output\\UPDATE\\SUCCESS_Update_" + environment + "_" + database + ".csv"
 # fallout file path
 fallout_file = dir_path + "\\Output\\UPDATE\\FALLOUT_Update_" + environment + "_" + database + ".csv"
-
 
 # initiate an MS SQL cursor to query with
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
