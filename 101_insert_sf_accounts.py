@@ -81,7 +81,7 @@ account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE Mig
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
 
-print(account_query_results)
+#print(account_query_results)
 # convert query results to a dataframe
 sf_accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
 # encode the dataframe before uploading to delete
@@ -90,13 +90,25 @@ sf_accounts_df = Utils.encode_df(sf_accounts_df)
 # perform merge of staging accounts and salesforce accounts
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_accounts_df) != 0:
+    print("len != 0")
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
-    both_df, sf_only_accounts, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'inner', suffixes = ('_SF', '_STG'), indicator = True)
+    both_df, sf_only_accounts, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    print("both_df-----")
+    print(len(both_df))
+    print(both_df.columns)
+    print(both_df.head())
+    print("sf_only_accounts-----")
+    print(len(sf_only_accounts))
+    print(sf_only_accounts.columns)
+    print(sf_only_accounts.head())
+    print("accounts_to_insert_df-----")
+    print(len(accounts_to_insert_df))
+    print(accounts_to_insert_df.columns)
+    print(accounts_to_insert_df.head())
 else:
+    print("len = 0")
     accounts_to_insert_df = stg_account_df
 
-print(right_only_df.columns)
-print(right_only_df.head())
 # keep all net new records and drop any records existing in both systems
 #accounts_to_insert_df = right_only_df.drop([], axis = 1)
 
