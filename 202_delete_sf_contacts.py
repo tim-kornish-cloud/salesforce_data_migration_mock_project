@@ -1,7 +1,7 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing accounts where Migrated_Record__c = True
+Description: log into salesforce, query existing contacts where Account.Migrated_Record__c = True
              delete all migrated account records from salesforce.
 
 """
@@ -29,9 +29,9 @@ sf_environment = 'Dev'
 sf_database = "Salesforce"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Update_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_delete_" + sf_environment + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Update_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_delete_" + sf_environment + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
