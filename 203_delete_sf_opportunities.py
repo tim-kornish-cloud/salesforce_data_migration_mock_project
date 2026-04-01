@@ -1,7 +1,7 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing accounts where Migrated_Record__c = True
+Description: log into salesforce, query existing opportunities where Migrated_Record__c = True
              delete all migrated account records from salesforce.
 
 """
@@ -29,9 +29,9 @@ sf_environment = 'Dev'
 sf_database = "Salesforce"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Update_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Update_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
@@ -44,7 +44,7 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-account_query = "SELECT Id FROM Contact WHERE Account.Migrated_Record__c = True"
+account_query = "SELECT Id FROM Opportunity2 WHERE Account.Migrated_Record__c = True"
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
 
