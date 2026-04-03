@@ -44,7 +44,7 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-quotet_query = "SELECT Id FROM Quote WHERE Migrated_Record__c = True"
+quotet_query = "SELECT Id FROM SBQQ__Quote__c WHERE Migrated_Record__c = True"
 # query salesforce and return the quotets to be deleted
 quotet_query_results = SF_Utils.query_salesforce(sf, quotet_query)
 
