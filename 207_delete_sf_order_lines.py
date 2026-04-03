@@ -44,16 +44,16 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-account_query = "SELECT Id FROM Contact WHERE Account.Migrated_Record__c = True"
-# query salesforce and return the accounts to be deleted
-account_query_results = SF_Utils.query_salesforce(sf, account_query)
+order_item_query = "SELECT Id FROM OrderItem WHERE OrderItem.Migrated_Record__c = True"
+# query salesforce and return the order_items to be deleted
+order_item_query_results = SF_Utils.query_salesforce(sf, order_item_query)
 
-#print(account_query_results)
+#print(order_item_query_results)
 # convert query results to a dataframe
-sf_accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
+sf_order_items_df = SF_Utils.load_query_with_lookups_into_dataframe(order_item_query_results)
 # encode the dataframe before uploading to delete
-sf_accounts_df = Utils.encode_df(sf_accounts_df)
+sf_order_items_df = Utils.encode_df(sf_order_items_df)
 
-# delete migrated salesforce account records
+# delete migrated salesforce order_item records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_accounts_df, 'Account', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'delete', success_file, fallout_file)
