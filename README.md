@@ -2,14 +2,14 @@
 
 ## create mock data from Mockaroo
 ### Following Objects:
-- accounts
-- contacts
-- contracts
-- contract lines.
+- Account
+- Contact
+- Contract
+- Contract line.
 ### Create relationships from:
-- Account->Contacts
+- Account->Contact
 - Account->Contract
-- Contract->Contract lines
+- Contract->Contract line
 
 ## Create MySQL Database with tables for accounts, Contacts, Contracts, Contract Lines.
 - Load newly associated csv mock data into source MySQL database tables
@@ -26,6 +26,14 @@
   - Migrated_Record__c
   - Account_Number_External_ID__c
 - Contacts
+  - Migrated_Record__c
+  - Contact_External_ID__c
 - Opportunity2
+  - Migrated_Record__c
+  - Opportunity_External_ID__c
 - SBQQ__Quote__c
+  - Migrated_Record__c
+  - Quote_External_ID__c
 - SBQQ__QuoteLine__c
+  - Migrated_Record__c
+  - QuoteLine_External_ID__c
