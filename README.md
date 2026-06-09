@@ -1,7 +1,15 @@
 # Salesforce Data Migration using fake data from Mocharoo.com
 
-## create mock data of accounts, contacts, contracts, contract lines.
-### Create relationships between Account->Contact, Account->Contract, Contract->Contract lines
+## create mock data from Mockaroo
+- Following Objects:
+- accounts
+- contacts
+- contracts
+- contract lines.
+### Create relationships from:
+- Account->Contacts
+- Account->Contract
+- Contract->Contract lines
 
 ## Create MySQL Database with tables for accounts, Contacts, Contracts, Contract Lines.
 ### Load newly associated csv mock data into source MySQL database tables
