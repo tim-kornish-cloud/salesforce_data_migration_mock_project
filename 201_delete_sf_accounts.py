@@ -29,9 +29,9 @@ sf_environment = 'Dev'
 sf_database = "Salesforce"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Update_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Update_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
