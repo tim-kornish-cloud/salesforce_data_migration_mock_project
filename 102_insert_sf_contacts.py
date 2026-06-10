@@ -1,13 +1,12 @@
 """
 Author: Timothy Kornish
-CreatedDate: March - 30 - 2026
+CreatedDate: June - 10 - 2026
 Description: Log into mssql server, query contact staging table records.
              Log into salesforce and query existing accounts.
              Merge SF.accounts.Account_Number_External_ID__c = MSSQL.Contact.Account_Number_External_ID__c
              from both systems to determine what related records exist
              in both systems, which records are net new, and which are missing prior attempted accounts, or other issues.
              Insert net new records into salesforce contact table.
-
 """
 
 import numpy as np
@@ -32,7 +31,7 @@ pd.set_option('display.max_columns', None)
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 database = 'mssql'
-object = "Contact"
+object = 'Contact'
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -81,7 +80,6 @@ account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE Mig
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
 
-#print(account_query_results)
 # convert query results to a dataframe
 sf_accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
 # encode the dataframe before uploading to delete
@@ -96,11 +94,13 @@ if len(sf_accounts_df) != 0:
 else:
     contacts_to_insert_df = stg_contact_df
 
-# print(contacts_to_insert_df.head())
-# print(contacts_to_insert_df.columns)
+# remove unneccessary column for insert
 contacts_to_insert_df.drop(["account_number_external_id",  "Account_Number_External_ID__c", "_merge"], axis = 1, inplace = True)
+
+# add english to list of languages each contact knows
 contacts_to_insert_df["languages"] = "English, " + contacts_to_insert_df["languages"]
 
+# rename columns to Salesforce field naming conventions
 contacts_to_insert_df.rename(columns = {"Id":"AccountId",
                                         "first_name" : "FirstName",
                                         "last_name" : "LastName",
@@ -108,9 +108,6 @@ contacts_to_insert_df.rename(columns = {"Id":"AccountId",
                                         "email" : "Email",
                                         "title" : "Title",
                                         "languages" : "Languages__c"}, inplace = True)
-
-print(contacts_to_insert_df.head())
-
 
 # add migrated record tag
 contacts_to_insert_df['Migrated_Record__c'] = True
