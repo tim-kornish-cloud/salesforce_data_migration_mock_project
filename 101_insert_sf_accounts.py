@@ -95,7 +95,7 @@ sf_accounts_df = Utils.encode_df(sf_accounts_df)
 if len(sf_accounts_df) != 0:
     print("len != 0")
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
-    both_df, sf_only_accounts, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    both_df, sf_accounts_only_df, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # keep all net new records and drop any records existing in both systems
     accounts_to_insert_df.drop(['Id', 'Account_Number_External_ID__c', '_merge'], axis = 1, inplace = True)
 
