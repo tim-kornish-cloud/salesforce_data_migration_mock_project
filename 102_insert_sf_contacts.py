@@ -74,7 +74,6 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 
 # query existing accounts from salesforce
-
 # query string to select records from salesforce
 account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE Migrated_Record__c = True"
 # query salesforce and return the accounts to be deleted
@@ -89,16 +88,37 @@ sf_accounts_df = Utils.encode_df(sf_accounts_df)
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_accounts_df) != 0:
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
-    contacts_to_insert_df, sf_only_accounts, mssql_contacts_only_df = Utils.get_df_diffs(sf_accounts_df, stg_contact_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    contacts_with_accounts_df, sf_only_accounts, mssql_contacts_only_df = Utils.get_df_diffs(sf_accounts_df, stg_contact_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    # remove unneccessary column for insert
+    contacts_with_accounts_df.drop(["account_number_external_id",  "Account_Number_External_ID__c", "_merge"], axis = 1, inplace = True)
 
+# query existing Contacts from salesforce
+# query string to select records from salesforce
+contact_query = "SELECT Id, FirstName, LastName FROM Contact WHERE Migrated_Record__c = True"
+# query salesforce and return the contacts to be deleted
+contact_query_results = SF_Utils.query_salesforce(sf, contact_query)
+
+# convert query results to a dataframe
+sf_contacts_df = SF_Utils.load_query_with_lookups_into_dataframe(contact_query_results)
+# encode the dataframe before uploading to delete
+sf_contacts_df = Utils.encode_df(sf_contacts_df)
+
+# perform merge of staging contacts and salesforce contacts
+# cannot merge a df with empty df, check if any salesforce migrated records exist
+if len(sf_contacts_df) != 0:
+    # merge the csv data with the salesforce data to match SF Ids to the CSV contacts
+    both_df, sf_contacts_only_df, contacts_to_insert_df = Utils.get_df_diffs(sf_contacts_df, contacts_with_accounts_df, left_on = ['FirstName', 'LastName'], right_on = ['first_name', 'last_name'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    # drop id columns and _merge column
+    contacts_to_insert_df.drop(['Id_SF', 'Id_STG', '_merge'], axis = 1, inplace = True)
 else:
-    contacts_to_insert_df = stg_contact_df
+    # if there are no matching contacts in SF, copy and load the entire dataframe
+    contacts_to_insert_df = contacts_with_accounts_df
 
-# remove unneccessary column for insert
-contacts_to_insert_df.drop(["account_number_external_id",  "Account_Number_External_ID__c", "_merge"], axis = 1, inplace = True)
 
 # add english to list of languages each contact knows
-contacts_to_insert_df["languages"] = "English, " + contacts_to_insert_df["languages"]
+contacts_to_insert_df["languages"] = np.where((contacts_to_insert_df["languages"] == 'English') | (contacts_to_insert_df["languages"] == 'english'),
+                                              contacts_to_insert_df["languages"],
+                                              "English, " + contacts_to_insert_df["languages"])
 
 # rename columns to Salesforce field naming conventions
 contacts_to_insert_df.rename(columns = {"Id":"AccountId",
@@ -112,6 +132,6 @@ contacts_to_insert_df.rename(columns = {"Id":"AccountId",
 # add migrated record tag
 contacts_to_insert_df['Migrated_Record__c'] = True
 
-# insert net new records into salesforce account object
+# insert net new records into salesforce Contact object
 # upload the records to salesforce
 SF_Utils.upload_dataframe_to_salesforce(sf, contacts_to_insert_df, 'Contact', 'insert', success_file, fallout_file)
