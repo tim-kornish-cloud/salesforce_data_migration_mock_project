@@ -28,7 +28,7 @@ sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
 #set object for output files
-object = "Account"
+object = "Contact"
 
 # success file path
 success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
