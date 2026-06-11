@@ -32,6 +32,8 @@ pd.set_option('display.max_columns', None)
 environment = 'localhost'
 database = 'mssql'
 object = "Account"
+# limit number of accounts to load due to storage size of SF org
+size = 100
 
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -96,7 +98,7 @@ if len(sf_accounts_df) != 0:
     print("len != 0")
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
     both_df, sf_accounts_only_df, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
-    # keep all net new records and drop any records existing in both systems
+    # drop id columns and _merge column
     accounts_to_insert_df.drop(['Id', 'Account_Number_External_ID__c', '_merge'], axis = 1, inplace = True)
 
 else:
@@ -122,6 +124,9 @@ accounts_to_insert_df.rename(columns={'phone' : 'Phone',
 
 # add migrated record tag
 accounts_to_insert_df['Migrated_Record__c'] = True
+
+# only keep subset of records to load to not surpass 5Mb storage limit
+accounts_to_insert_df = accounts_to_insert_df.head(size)
 
 # insert net new records into salesforce account object
 # upload the records to salesforce
