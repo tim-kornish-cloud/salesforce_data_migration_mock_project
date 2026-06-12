@@ -130,4 +130,4 @@ accounts_to_insert_df = accounts_to_insert_df.head(size)
 
 # insert net new records into salesforce account object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, 'Account', 'insert', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, object, 'insert', success_file, fallout_file)

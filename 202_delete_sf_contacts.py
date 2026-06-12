@@ -58,4 +58,4 @@ sf_contacts_df = Utils.encode_df(sf_contacts_df)
 
 # delete migrated salesforce contact records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_contacts_df, 'Contact', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_contacts_df, object, 'delete', success_file, fallout_file)

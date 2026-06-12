@@ -58,4 +58,4 @@ sf_accounts_df = Utils.encode_df(sf_accounts_df)
 
 # delete migrated salesforce account records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_accounts_df, 'Account', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_accounts_df, object, 'delete', success_file, fallout_file)

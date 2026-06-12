@@ -134,4 +134,4 @@ contacts_to_insert_df['Migrated_Record__c'] = True
 
 # insert net new records into salesforce Contact object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, contacts_to_insert_df, 'Contact', 'insert', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, contacts_to_insert_df, object, 'insert', success_file, fallout_file)
