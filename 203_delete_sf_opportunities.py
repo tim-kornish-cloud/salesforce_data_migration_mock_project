@@ -1,6 +1,6 @@
 """
 Author: Timothy Kornish
-CreatedDate: March - 30 - 2026
+CreatedDate: June - 11 - 2026
 Description: log into salesforce, query existing opportunities where Migrated_Record__c = True
              delete all migrated account records from salesforce.
 
@@ -27,11 +27,13 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
+#set object for output files
+object = "Opportunity"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
@@ -44,7 +46,7 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-opportunity2_query = "SELECT Id FROM Opportunity2 WHERE Account.Migrated_Record__c = True"
+opportunity2_query = "SELECT Id FROM Opportunity WHERE Migrated_Record__c = True"
 # query salesforce and return the opportunity2 to be deleted
 opportunity2_query_results = SF_Utils.query_salesforce(sf, opportunity2_query)
 
@@ -56,4 +58,4 @@ sf_opportunity2_df = Utils.encode_df(sf_opportunity2_df)
 
 # delete migrated salesforce opportunity2 records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_opportunity2_df, 'Opportunity2', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_opportunity2_df, object, 'delete', success_file, fallout_file)
