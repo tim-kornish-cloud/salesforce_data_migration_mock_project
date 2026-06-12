@@ -1,7 +1,7 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing contacts where Account.Migrated_Record__c = True
+Description: log into salesforce, query existing contacts where Migrated_Record__c = True
              delete all migrated account records from salesforce.
 
 """
