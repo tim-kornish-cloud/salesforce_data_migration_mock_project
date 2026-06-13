@@ -1,7 +1,7 @@
 """
 Author: Timothy Kornish
-CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing quotes where Migrated_Record__c = True
+CreatedDate: June - 11 - 2026
+Description: log into salesforce, query existing opportunities where Migrated_Record__c = True
              delete all migrated account records from salesforce.
 
 """
@@ -27,11 +27,13 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
+#set object for output files
+object = "SBQQ__Quote__c"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_delete_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_delete_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
@@ -44,16 +46,16 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-quotet_query = "SELECT Id FROM SBQQ__Quote__c WHERE Migrated_Record__c = True"
-# query salesforce and return the quotets to be deleted
-quotet_query_results = SF_Utils.query_salesforce(sf, quotet_query)
+quote_query = "SELECT Id FROM SBQQ__Quote__c WHERE Migrated_Record__c = True"
+# query salesforce and return the quote to be deleted
+quote_query_results = SF_Utils.query_salesforce(sf, quote_query)
 
-#print(quotet_query_results)
+#print(quote_query_results)
 # convert query results to a dataframe
-sf_quotets_df = SF_Utils.load_query_with_lookups_into_dataframe(quotet_query_results)
+sf_quote_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_query_results)
 # encode the dataframe before uploading to delete
-sf_quotets_df = Utils.encode_df(sf_quotets_df)
+sf_quote_df = Utils.encode_df(sf_quote_df)
 
-# delete migrated salesforce quotet records
+# delete migrated salesforce quote records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_quotets_df, 'SBQQ__Quote__c', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_quote_df, object, 'delete', success_file, fallout_file)
