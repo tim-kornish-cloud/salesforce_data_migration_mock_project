@@ -137,12 +137,13 @@ sf_quote_df = Utils.encode_df(sf_quote_df)
 
 # perform merge of staging contracts and salesforce opportunities
 # cannot merge a df with empty df, check if any salesforce migrated records exist
-if len(sf_opportunity_df) != 0:
+if len(sf_quote_df) != 0:
     # merge the csv data with the salesforce data to match SF Ids to the CSV Contracts
     both_df, sf_quote_only_df, quote_to_insert_df = Utils.get_df_diffs(sf_quote_df, quotes_with_opps_df, left_on = ['Quote_External_ID__c'], right_on = ['contract_number'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # rename Id column to SBQQ__Opportunity2__c
     quote_to_insert_df.drop(['_merge', 'Id', 'Quote_External_ID__c'], axis = 1, inplace = True)
-
+else:
+    quote_to_insert_df = quotes_with_opps_df
 # rename columns to Salesforce field naming conventions
 quote_to_insert_df.rename(columns = {"end_date":"SBQQ__EndDate__c",
                                      "contract_number" : "Quote_External_ID__c",
