@@ -157,8 +157,8 @@ quote_to_insert_df['Migrated_Record__c'] = True
 quote_to_insert_df['SBQQ__Primary__c'] = True
 quote_to_insert_df['SBQQ__SubscriptionTerm__c'] = 12
 quote_to_insert_df['SBQQ__ContractingMethod__c'] = 'By Subscription End Date'
-
-
+quote_to_insert_df['SBQQ__Type__c'] = 'Quote'
+quote_to_insert_df['SBQQ__Status__c'] = 'Draft'
 print(quote_to_insert_df.head())
 
 # insert net new records into salesforce Contact object
