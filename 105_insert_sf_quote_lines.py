@@ -181,10 +181,10 @@ contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(
 
 # set pricing method to list
 contract_lines_with_pricebookentry_df["SBQQ__PricingMethod__c"] = "List"
+contract_lines_with_pricebookentry_df["SBQQ__SubscriptionPricing__c"] = "Fixed Price"
 # add migrated record
 contract_lines_with_pricebookentry_df['Migrated_Record__c'] = True
 contract_lines_with_pricebookentry_df['SBQQ__SubscriptionTerm__c'] = 12
-#contract_lines_with_pricebookentry_df['SBQQ__SubscriptionType__c'] = 'Renewable'
 
 print(contract_lines_with_pricebookentry_df.head())
 
