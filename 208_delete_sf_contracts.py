@@ -1,8 +1,9 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing accounts where Migrated_Record__c = True
-             delete all migrated account records from salesforce.
+Description: log into salesforce, query existing Contracts where SBQQ_Quote__r.Migrated_Record__c = true
+             1) update status to draft.
+             2) delete contract records
 
 """
 
@@ -27,11 +28,13 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
+#set object for output files
+object = "Contract"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Update_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Update_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
@@ -53,6 +56,14 @@ contract_query_results = SF_Utils.query_salesforce(sf, contract_query)
 sf_contracts_df = SF_Utils.load_query_with_lookups_into_dataframe(contract_query_results)
 # encode the dataframe before uploading to delete
 sf_contracts_df = Utils.encode_df(sf_contracts_df)
+
+sf_contracts_df['Status'] = 'Draft'
+
+# delete migrated salesforce contract records
+# upload the records to salesforce for deletion
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_contracts_df, 'Contract', 'update', success_file, fallout_file)
+
+sf_contracts_df.drop(['Status'], axis = 1, inplace = True)
 
 # delete migrated salesforce contract records
 # upload the records to salesforce for deletion
