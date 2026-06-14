@@ -155,13 +155,13 @@ quote_to_insert_df = SF_Utils.format_date_to_salesforce_date(quote_to_insert_df,
 
 # add migrated record tag
 quote_to_insert_df['Migrated_Record__c'] = True
-quote_to_insert_df['SBQQ__Primary__c'] = True
+quote_to_insert_df['SBQQ__Primary__c'] = False
 quote_to_insert_df['SBQQ__SubscriptionTerm__c'] = 12
 quote_to_insert_df['SBQQ__ContractingMethod__c'] = 'By Subscription End Date'
 quote_to_insert_df['SBQQ__Type__c'] = 'Quote'
 quote_to_insert_df['SBQQ__Status__c'] = 'Draft'
 print(quote_to_insert_df.head())
 
-# insert net new records into salesforce Contact object
+# insert net new records into salesforce Quote object
 # upload the records to salesforce
 SF_Utils.upload_dataframe_to_salesforce(sf, quote_to_insert_df, object, 'insert', success_file, fallout_file)
