@@ -1,8 +1,8 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing accounts where Migrated_Record__c = True
-             delete all migrated account records from salesforce.
+Description: log into salesforce, query existing SBQQ__QuoteLine__c where Migrated_Record__c = True
+             delete all migrated SBQQ__QuoteLine__c records from salesforce.
 
 """
 
