@@ -1,9 +1,10 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing accounts where Migrated_Record__c = True
-             delete all migrated account records from salesforce.
-
+Description: log into salesforce, query existing Order
+             1) update SBQQ__Contracted__c = False
+             2) set status from activated to draft
+             delete WHERE SBQQ__Quote__r.Migrated_Record__c = True
 """
 
 import numpy as np
@@ -27,11 +28,13 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
+#set object for output files
+object = "Order"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_delete_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_delete_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
@@ -44,7 +47,7 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__c.Migrated_Record__c = True"
+order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = True"
 # query salesforce and return the orders to be deleted
 order_query_results = SF_Utils.query_salesforce(sf, order_query)
 
@@ -56,4 +59,4 @@ sf_orders_df = Utils.encode_df(sf_orders_df)
 
 # delete migrated salesforce order records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Account', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'delete', success_file, fallout_file)
