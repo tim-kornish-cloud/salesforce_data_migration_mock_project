@@ -11,6 +11,7 @@ import pandas as pd
 import os
 from custom_db_utilities import  MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
+import time
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
@@ -28,7 +29,7 @@ pd.set_option('display.max_columns', None)
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 database = 'mssql'
-object = 'SBQQ__QuoteLine__c'
+object = 'SBQQ__Quote__c'
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -73,14 +74,30 @@ sf_quotes_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_query_resul
 # encode the dataframe before uploading to delete
 sf_quotes_df = Utils.encode_df(sf_quotes_df)
 
+
+
 sf_quotes_df['SBQQ__Primary__c'] = True
 
 # update records in salesforce Quote object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_quotes_df, object, 'update', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_quotes_df, object, 'update', success_file, fallout_file, batch_size = 10)
 
-sf_quotes_df['Ordered'] = True
-quote_to_insert_df.drop(['SBQQ__Primary__c'], axis = 1, inplace = True)
+print("Begin 1 minute time delay before ordering quotes.")
+time.sleep(60)
+print("Time delay over, start ordering quotes.")
+
+# query existing quotes from salesforce
+# query string to select records from salesforce
+quote_query = "SELECT Id FROM SBQQ__Quote__c WHERE Migrated_Record__c = True AND SBQQ__Primary__c = True"
+# query salesforce and return the quotes to be deleted
+quote_query_results = SF_Utils.query_salesforce(sf, quote_query)
+
+# convert query results to a dataframe
+sf_quotes_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_query_results)
+# encode the dataframe before uploading to delete
+sf_quotes_df = Utils.encode_df(sf_quotes_df)
+
+sf_quotes_df['SBQQ__Ordered__c'] = True
 
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_quotes_df, object, 'update', success_file_2, fallout_file_2)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_quotes_df, object, 'update', success_file_2, fallout_file_2, batch_size = 10)
