@@ -44,11 +44,14 @@ fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Insert_" + environment + "_
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # select accounts to match against the csv to not attempt to insert duplicates
-select_query = """SELECT [contract_line_number]
-      ,[contract_number]
-      ,[product]
-      ,[quantity]
-  FROM [Data_Engineering].[dbo].[STG_SOURCE_Contract_Lines]
+select_query = """SELECT scl.[contract_line_number]
+      ,scl.[contract_number]
+      ,scl.[product]
+      ,scl.[quantity]
+      ,sc.[start_date],
+      sc.[end_date]
+  FROM [Data_Engineering].[dbo].[STG_SOURCE_Contract_Lines] as scl
+  INNER JOIN [Data_Engineering].[dbo].[STG_SOURCE_Contracts] as sc ON sc.contract_number = scl.contract_number
   ORDER BY contract_number"""
 
 # accounts in the mssql table shown in the query above
@@ -169,11 +172,19 @@ contract_lines_with_pricebookentry_df["SBQQ__Number__c"] = np.where(contract_lin
                                                                     np.where(contract_lines_with_pricebookentry_df['product'].str.contains('SLA'), 2, 3))
 contract_lines_with_pricebookentry_df.drop(["contract_number", "product"], axis = 1, inplace = True)
 contract_lines_with_pricebookentry_df.rename(columns = {"quantity" : "SBQQ__Quantity__c",
-                                                        "contract_line_number" : "QuoteLine_External_ID__c"}, inplace = True)
+                                                        "contract_line_number" : "QuoteLine_External_ID__c",
+                                                        "start_date" : "SBQQ__StartDate__c",
+                                                        "end_date" : "SBQQ__EndDate__c"}, inplace = True)
+
+contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__StartDate__c")
+contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__EndDate__c")
+
 # set pricing method to list
 contract_lines_with_pricebookentry_df["SBQQ__PricingMethod__c"] = "List"
 # add migrated record
 contract_lines_with_pricebookentry_df['Migrated_Record__c'] = True
+contract_lines_with_pricebookentry_df['SBQQ__SubscriptionTerm__c'] = 12
+#contract_lines_with_pricebookentry_df['SBQQ__SubscriptionType__c'] = 'Renewable'
 
 print(contract_lines_with_pricebookentry_df.head())
 
