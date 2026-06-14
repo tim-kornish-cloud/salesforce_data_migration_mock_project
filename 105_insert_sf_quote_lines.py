@@ -185,6 +185,7 @@ contract_lines_with_pricebookentry_df["SBQQ__SubscriptionPricing__c"] = "Fixed P
 # add migrated record
 contract_lines_with_pricebookentry_df['Migrated_Record__c'] = True
 contract_lines_with_pricebookentry_df['SBQQ__SubscriptionTerm__c'] = 12
+contract_lines_with_pricebookentry_df['SBQQ__UnitCost__c'] = contract_lines_with_pricebookentry_df['SBQQ__ListPrice__c']
 
 print(contract_lines_with_pricebookentry_df.head())
 
