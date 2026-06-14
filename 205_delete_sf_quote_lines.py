@@ -27,11 +27,13 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
+#set object for output files
+object = "SBQQ__QuoteLine__c"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_delete_" + sf_environment + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_delete_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
