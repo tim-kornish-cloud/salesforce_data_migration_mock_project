@@ -1,8 +1,12 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing accounts where Migrated_Record__c = True
-             delete all migrated account records from salesforce.
+Description: log into salesforce, query existing OrderItem WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True"
+             query existing Order WHERE SBQQ__Quote__r.Migrated_Record__c = True"
+             1) on OrderItem set SBQQ__Status__c = Draft
+             2) update SBQQ__Contract__c = False on Order and set SBQQ__Quote__c = NULL
+             3) set status of order to draft
+             4) delete orderItems of order
 
 """
 
@@ -27,11 +31,37 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
+#set object for output files
+object = "OrderItem"
+
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Update_" + sf_environment + "_" + sf_database + ".csv"
+success_file_1 = dir_path + "\\Output\\UPDATE\\SUCCESS_1_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Update_" + sf_environment + "_" + sf_database + ".csv"
+fallout_file_1 = dir_path + "\\Output\\UPDATE\\FALLOUT_1_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+# success file path
+success_file_4 = dir_path + "\\Output\\UPDATE\\SUCCESS_4_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+# fallout file path
+fallout_file_4 = dir_path + "\\Output\\UPDATE\\FALLOUT_4_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+
+#set object for output files
+object = "Order"
+
+# success file path
+success_file_2 = dir_path + "\\Output\\UPDATE\\SUCCESS_2_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+# fallout file path
+fallout_file_2 = dir_path + "\\Output\\UPDATE\\FALLOUT_2_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+
+# success file path
+success_file_3 = dir_path + "\\Output\\DELETE\\SUCCESS_3_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+# fallout file path
+fallout_file_3 = dir_path + "\\Output\\DELETE\\FALLOUT_3_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+
+# success file path
+success_file_5 = dir_path + "\\Output\\DELETE\\SUCCESS_5_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+# fallout file path
+fallout_file_5 = dir_path + "\\Output\\DELETE\\FALLOUT_5_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+
 
 # get credentials for salesforce login
 # get username from credentials
@@ -43,8 +73,9 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
+
 # query string to select records from salesforce
-order_item_query = "SELECT Id FROM OrderItem WHERE OrderItem.Migrated_Record__c = True"
+order_item_query = "SELECT Id FROM OrderItem WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True"
 # query salesforce and return the order_items to be deleted
 order_item_query_results = SF_Utils.query_salesforce(sf, order_item_query)
 
@@ -53,7 +84,40 @@ order_item_query_results = SF_Utils.query_salesforce(sf, order_item_query)
 sf_order_items_df = SF_Utils.load_query_with_lookups_into_dataframe(order_item_query_results)
 # encode the dataframe before uploading to delete
 sf_order_items_df = Utils.encode_df(sf_order_items_df)
+sf_order_items_df['SBQQ__Status__c'] = 'Draft'
+
+# upload the records to salesforce for deletion
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'update', success_file_1, fallout_file_1)
+
+# query string to select records from salesforce
+order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = True"
+# query salesforce and return the orders to be deleted
+order_query_results = SF_Utils.query_salesforce(sf, order_query)
+
+#print(order_query_results)
+# convert query results to a dataframe
+sf_orders_df = SF_Utils.load_query_with_lookups_into_dataframe(order_query_results)
+# encode the dataframe before uploading to delete
+sf_orders_df = Utils.encode_df(sf_orders_df)
+
+# update contracted
+sf_orders_df['SBQQ__Contracted__c'] = False
+sf_orders_df['SBQQ__Quote__c'] = ""
+# upload the records to salesforce for update
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_3, fallout_file_3)
+
+# update status  = draft
+sf_orders_df['Status'] = 'Draft'
+sf_orders_df.drop(['SBQQ__Contracted__c'], axis = 1, inplace = True)
+# upload the records to salesforce for update
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_4, fallout_file_4)
+
+print(sf_order_items_df.head())
 
 # delete migrated salesforce order_item records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'delete', success_file_4, fallout_file_4)
+
+sf_orders_df = sf_orders_df[['Id']]
+# upload the records to salesforce for update
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'delete', success_file_5, fallout_file_5)
