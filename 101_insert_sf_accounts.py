@@ -31,11 +31,12 @@ pd.set_option('display.max_columns', None)
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 database = 'mssql'
+# set the object to perform insert into salesforce against
 object = "Account"
-# limit number of accounts to load due to storage size of SF org
+# limit number of accounts to load due to storage size of SF dev/playground org
 size = 50
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # success file path
@@ -80,13 +81,11 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 
 # query existing accounts from salesforce
-
 # query string to select records from salesforce
 account_query = "SELECT Id, Account_Number_External_ID__c FROM Account WHERE Migrated_Record__c = True"
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
 
-#print(account_query_results)
 # convert query results to a dataframe
 sf_accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
 # encode the dataframe before uploading to delete
@@ -95,14 +94,12 @@ sf_accounts_df = Utils.encode_df(sf_accounts_df)
 # perform merge of staging accounts and salesforce accounts
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_accounts_df) != 0:
-    print("len != 0")
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
     both_df, sf_accounts_only_df, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # drop id columns and _merge column
     accounts_to_insert_df.drop(['Id', 'Account_Number_External_ID__c', '_merge'], axis = 1, inplace = True)
-
 else:
-    print("len = 0")
+    # if there are no existing accounts in Salesforce, insert all staging accounts
     accounts_to_insert_df = stg_account_df
 
 # convert float values to ints
@@ -125,7 +122,7 @@ accounts_to_insert_df.rename(columns={'phone' : 'Phone',
 # add migrated record tag
 accounts_to_insert_df['Migrated_Record__c'] = True
 
-# only keep subset of records to load to not surpass 5Mb storage limit
+# only keep subset of records to load to not surpass 5Mb storage limit of Salesforce Org.
 accounts_to_insert_df = accounts_to_insert_df.head(size)
 
 # insert net new records into salesforce account object
