@@ -19,7 +19,7 @@ Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # declare which environment this script will perform operations against,
@@ -27,7 +27,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
-#set object for output files
+# set object for output files
 object = "SBQQ__QuoteLine__c"
 
 # success file path
@@ -50,7 +50,6 @@ quote_line_query = "SELECT Id FROM SBQQ__QuoteLine__c WHERE Migrated_Record__c =
 # query salesforce and return the quote_lines to be deleted
 quote_line_query_results = SF_Utils.query_salesforce(sf, quote_line_query)
 
-#print(quote_line_query_results)
 # convert query results to a dataframe
 sf_quote_lines_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_line_query_results)
 # encode the dataframe before uploading to delete

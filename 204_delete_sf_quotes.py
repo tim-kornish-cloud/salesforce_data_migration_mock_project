@@ -1,8 +1,8 @@
 """
 Author: Timothy Kornish
 CreatedDate: June - 11 - 2026
-Description: log into salesforce, query existing opportunities where Migrated_Record__c = True
-             delete all migrated account records from salesforce.
+Description: log into salesforce, query existing SBQQ__Quote__c where Migrated_Record__c = True
+             delete all migrated SBQQ__Quote__c records from salesforce.
 
 """
 
@@ -19,7 +19,7 @@ Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # declare which environment this script will perform operations against,
@@ -27,7 +27,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
-#set object for output files
+# set object for output files
 object = "SBQQ__Quote__c"
 
 # success file path
@@ -50,7 +50,6 @@ quote_query = "SELECT Id FROM SBQQ__Quote__c WHERE Migrated_Record__c = True"
 # query salesforce and return the quote to be deleted
 quote_query_results = SF_Utils.query_salesforce(sf, quote_query)
 
-#print(quote_query_results)
 # convert query results to a dataframe
 sf_quote_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_query_results)
 # encode the dataframe before uploading to delete
