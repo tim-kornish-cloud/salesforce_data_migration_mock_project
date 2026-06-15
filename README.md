@@ -52,6 +52,7 @@
   3. migrate_source_contract_data_to_staging_mssql.py
   4. migrate_source_contract_line_data_to_staging_mssql.py
 ### Migration Execution Scripts
+  - Migrate records from staging MSSQL DB to Salesforce steps:
   1. 101_insert_sf_accounts.py
   2. 102_insert_sf_contacts.py
   3. 103_insert_sf_opportunities.py
