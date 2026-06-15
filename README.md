@@ -57,18 +57,18 @@
   - 107_update_sf_orders_activate_order.py
   - 108_update_sf_orders_contract_order.py
 ### Migration Backout-Delete Scripts
-  - Scripts must be executed in descending order, 206_delete_sf_orders.py is deprecated.
+  - Scripts must be executed in descending order, 206_delete_sf_orders.py is deprecated, redundant after running 207_delete_sf_order_lines.py.
   - 209_delete_sf_subscriptions.py
   - 208_delete_sf_contracts.py
   - 207_delete_sf_order_lines.py
-  - 206_delete_sf_orders.py
+  ~~- 206_delete_sf_orders.py~~
   - 205_delete_sf_quote_lines.py
   - 204_delete_sf_quotes.py
   - 203_delete_sf_opportunities.py
   - 202_delete_sf_contacts.py
   - 201_delete_sf_accounts.py
 ### Output and Reporting
-  - Each fold holds success and fallout files for the stated DML operations
+  - Each folder holds success and fallout files for the stated DML operations
     - DELETE/
     - INESRT/
     - UPDATE/
