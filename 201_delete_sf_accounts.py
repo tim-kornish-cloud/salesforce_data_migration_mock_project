@@ -19,7 +19,7 @@ Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # declare which environment this script will perform operations against,
