@@ -4,7 +4,8 @@ CreatedDate: June - 10 - 2026
 Description: Log into mssql server, query contact staging table records.
              Log into salesforce and query existing accounts.
              Merge SF.accounts.Account_Number_External_ID__c = MSSQL.Contact.Account_Number_External_ID__c
-             from both systems to determine what related records exist
+             from both systems to align migrated accounts to staging contacts.
+             query salesforce for any contacts to determine what related records exist
              in both systems, which records are net new, and which are missing prior attempted accounts, or other issues.
              Insert net new records into salesforce contact table.
 """
@@ -31,8 +32,9 @@ pd.set_option('display.max_columns', None)
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 database = 'mssql'
+# set object name to insert records into salesforce
 object = 'Contact'
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # success file path
@@ -53,7 +55,7 @@ select_query = """ SELECT [account_number_external_id]
       ,[languages]
   FROM [Data_Engineering].[dbo].[STG_SOURCE_Contacts]"""
 
-# accounts in the mssql table shown in the query above
+# contacts in the mssql table shown in the query above
 stg_contact_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 
 # get credentials for salesforce login
@@ -111,7 +113,7 @@ if len(sf_contacts_df) != 0:
     # drop id columns and _merge column
     contacts_to_insert_df.drop(['Id_SF', 'Id_STG', '_merge'], axis = 1, inplace = True)
 else:
-    # if there are no matching contacts in SF, copy and load the entire dataframe
+    # if there are no matching contacts in SF, copy and load the entire staging table dataframe with related account Ids
     contacts_to_insert_df = contacts_with_accounts_df
 
 
