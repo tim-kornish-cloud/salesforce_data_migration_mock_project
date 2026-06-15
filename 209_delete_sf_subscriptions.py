@@ -31,9 +31,9 @@ sf_database = "Salesforce"
 object = "SBQQ__Subscription__c"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+success_file = dir_path + "\\Output\\DELETE\\SUCCESS_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
@@ -50,7 +50,6 @@ subscription_query = "SELECT Id FROM SBQQ__Subscription__c WHERE SBQQ__QuoteLine
 # query salesforce and return the subscriptions to be deleted
 subscription_query_results = SF_Utils.query_salesforce(sf, subscription_query)
 
-#print(subscription_query_results)
 # convert query results to a dataframe
 sf_subscriptions_df = SF_Utils.load_query_with_lookups_into_dataframe(subscription_query_results)
 # encode the dataframe before uploading to delete
