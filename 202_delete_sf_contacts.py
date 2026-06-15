@@ -2,7 +2,7 @@
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
 Description: log into salesforce, query existing contacts where Migrated_Record__c = True
-             delete all migrated account records from salesforce.
+             delete all migrated contact records from salesforce.
 
 """
 
@@ -19,7 +19,7 @@ Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # declare which environment this script will perform operations against,
@@ -27,7 +27,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
-#set object for output files
+# set object for output files
 object = "Contact"
 
 # success file path
@@ -46,11 +46,10 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-contact_query = "SELECT Id FROM Contact WHERE Account.Migrated_Record__c = True"
+contact_query = "SELECT Id FROM Contact WHERE Account.Migrated_Record__c = True OR Migrated_Record__c = True"
 # query salesforce and return the contacts to be deleted
 contact_query_results = SF_Utils.query_salesforce(sf, contact_query)
 
-#print(contact_query_results)
 # convert query results to a dataframe
 sf_contacts_df = SF_Utils.load_query_with_lookups_into_dataframe(contact_query_results)
 # encode the dataframe before uploading to delete

@@ -50,7 +50,6 @@ account_query = "SELECT Id FROM Account WHERE Migrated_Record__c = True"
 # query salesforce and return the accounts to be deleted
 account_query_results = SF_Utils.query_salesforce(sf, account_query)
 
-#print(account_query_results)
 # convert query results to a dataframe
 sf_accounts_df = SF_Utils.load_query_with_lookups_into_dataframe(account_query_results)
 # encode the dataframe before uploading to delete
