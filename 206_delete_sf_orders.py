@@ -1,7 +1,10 @@
 """
 Author: Timothy Kornish
 CreatedDate: March - 30 - 2026
-Description: log into salesforce, query existing Order
+Description:
+             Deprecated: Orders are deleted in 207 due to loss of relationship between quote and order when deleting order orderItems
+
+             log into salesforce, query existing Order
              1) update SBQQ__Contracted__c = False
              2) set status from activated to draft
              delete WHERE SBQQ__Quote__r.Migrated_Record__c = True
@@ -20,7 +23,7 @@ Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # declare which environment this script will perform operations against,
@@ -28,7 +31,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
-#set object for output files
+# set object for output files
 object = "Order"
 
 # success file path
@@ -51,7 +54,6 @@ order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = Tr
 # query salesforce and return the orders to be deleted
 order_query_results = SF_Utils.query_salesforce(sf, order_query)
 
-#print(order_query_results)
 # convert query results to a dataframe
 sf_orders_df = SF_Utils.load_query_with_lookups_into_dataframe(order_query_results)
 # encode the dataframe before uploading to delete
