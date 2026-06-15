@@ -33,7 +33,7 @@ environment = 'localhost'
 database = 'mssql'
 object = "Account"
 # limit number of accounts to load due to storage size of SF org
-size = 100
+size = 50
 
 #set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
