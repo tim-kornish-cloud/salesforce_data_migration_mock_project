@@ -2,7 +2,7 @@ credentials.properties
 credentials.py
 
 *.properties
-*.txt
+
 *.vsidx
 Output\*.csv
 Output\DELETE\*.csv
