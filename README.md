@@ -17,6 +17,7 @@
 * [Set up intermediary staging database on MSSQL tables](#Set-up-intermediary-staging-database-on-MSSQL-tables)
 * [Set up Salesforce Environment with Salesforce CPQ](#Set-up-Salesforce-Environment-with-Salesforce-CPQ)
 * [Add custom fields to objects in Salesforce to track migrated records](#Add-custom-fields-to-objects-in-Salesforce-to-track-migrated-records)
+* [Credentials](#Credentials)
 
 ## File Structure
 ### Source Data And Source Data Setup
@@ -128,3 +129,7 @@
 - SBQQ__QuoteLine__c
   - Migrated_Record__c
   - QuoteLine_External_ID__c
+
+## Credentials
+- The credentials to log into the source MySQL DB, Staging MSSQL DB and Salesforce are all stored in a file kept secret by the .gitignore
+- I create a credentials.py and credentials.properties which store the values and pull them into respective migration scripts.
