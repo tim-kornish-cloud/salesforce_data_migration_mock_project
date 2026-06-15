@@ -9,6 +9,7 @@
   * [Migration Backout Delete Scripts](#Migration-Backout-Delete-Scripts)
   * [Output and Reporting](#Output-and-Reporting)
   * [Database Utilities Class](#Database-Utilities-Class)
+  * [Install Dependencies](#Install-Dependencies)
 * [Create mock data from Mockaroo](#Create-mock-data-from-Mockaroo)
     * [Following Objects](#Following-Objects)
     * [Create relationships for](#Create-relationships-for)
@@ -75,6 +76,13 @@
 ### Database Utilities Class
 - custom_db_utilities.py
   - Holds functions for pulling data from several Database as well as perform INSERT, DELETE, and UPDATE calls. Used to load data from CSV to MySQL, from MySQL to MSSQL, and from MSSQL to Salesforce.
+
+### Install Dependencies
+- requirements.txt
+  - Enter below command to install all dependecies:
+  ```bash
+  pip install -r requirements.txt
+  ```
 
 ## Create mock data from Mockaroo
 ### Following Objects
