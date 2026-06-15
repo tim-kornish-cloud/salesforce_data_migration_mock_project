@@ -31,8 +31,9 @@ pd.set_option('display.max_columns', None)
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 database = 'mssql'
+# set object name to insert records into salesforce
 object = 'SBQQ__QuoteLine__c'
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # success file path
@@ -74,8 +75,6 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 
-# Query SF quotes - relate contract line to quote
-
 # query existing quotes from salesforce
 # query string to select records from salesforce
 quote_query = "SELECT Id, Quote_External_ID__c FROM SBQQ__Quote__c WHERE Migrated_Record__c = True"
@@ -94,11 +93,11 @@ if len(sf_quotes_df) != 0:
     contract_lines_with_quotes_df, sf_only_quotes_df, mssql_contract_lines_only_df = Utils.get_df_diffs(sf_quotes_df, stg_contract_line_df, left_on = ['Quote_External_ID__c'], right_on = ['contract_number'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contract_lines_with_quotes_df.drop(["Quote_External_ID__c", "_merge"], axis = 1, inplace = True)
+    # rename Id column from merge to SBQQ__Quote__c
     contract_lines_with_quotes_df.rename(columns = {"Id" : "SBQQ__Quote__c"}, inplace = True)
 
-
 # Query SF Products - map product to sf product
-
+# product mapping from source product name to salesforce product name
 product_mapping  = {"diesel-large" : "GenWatt Diesel 1000kW",
                     "diesel-low" : "GenWatt Diesel 10kW",
                     "diesel-medium" : "GenWatt Diesel 200kW",
@@ -117,6 +116,7 @@ product_mapping  = {"diesel-large" : "GenWatt Diesel 1000kW",
                     "sla - Platinum" : "SLA: Platinum",
                     "sla - Silver" : "SLA: Silver"}
 
+# replace products in df with mapped values
 contract_lines_with_quotes_df["product"] = contract_lines_with_quotes_df["product"].replace(product_mapping)
 
 # query existing products from salesforce
@@ -137,19 +137,15 @@ if len(sf_products_df) != 0:
     contract_lines_with_products_df, sf_only_products_df, mssql_contract_lines_only_df = Utils.get_df_diffs(sf_products_df, contract_lines_with_quotes_df, left_on = ['Name'], right_on = ['product'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contract_lines_with_products_df.drop(["Name", "_merge"], axis = 1, inplace = True)
+    # rename product Id to SBQQ__Product__c
     contract_lines_with_products_df.rename(columns = {"Id" : "SBQQ__Product__c"}, inplace = True)
 
-
-print(contract_lines_with_products_df.head())
-
 # Query Pricebook entries to get list unit price for mapped Products
-
 # query existing Pricebook entries from salesforce
 # query string to select records from salesforce
 pricebookentry_query = "SELECT Id, Product2Id, UnitPrice FROM PricebookEntry WHERE PriceBook2.IsStandard = True"
 # query salesforce and return the Pricebook entries
 pricebookentry_query_results = SF_Utils.query_salesforce(sf, pricebookentry_query)
-
 # convert query results to a dataframe
 sf_pricebookentry_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebookentry_query_results)
 # encode the dataframe before uploading to delete
@@ -162,32 +158,37 @@ if len(sf_pricebookentry_df) != 0:
     contract_lines_with_pricebookentry_df, sf_only_pricebookentry_df, mssql_contract_lines_only_df = Utils.get_df_diffs(sf_pricebookentry_df, contract_lines_with_products_df, left_on = ['Product2Id'], right_on = ['SBQQ__Product__c'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contract_lines_with_pricebookentry_df.drop(["Product2Id", "_merge"], axis = 1, inplace = True)
+    # rename pricebookentry Id and unit price
     contract_lines_with_pricebookentry_df.rename(columns = {"Id" : "SBQQ__PricebookEntryId__c", "UnitPrice" : "SBQQ__ListPrice__c"}, inplace = True)
 
 
 
 # if name contains install, number = 2, if name contains sla, number = 3, else number = 1
-
+# set SBQQ__Number__c based on product type
 contract_lines_with_pricebookentry_df["SBQQ__Number__c"] = np.where(contract_lines_with_pricebookentry_df['product'].str.contains('GenWatt'), 1,
                                                                     np.where(contract_lines_with_pricebookentry_df['product'].str.contains('SLA'), 2, 3))
+# drop extra columns not needed for insert
 contract_lines_with_pricebookentry_df.drop(["contract_number", "product"], axis = 1, inplace = True)
+# rename staging table column names to salesforce column names
 contract_lines_with_pricebookentry_df.rename(columns = {"quantity" : "SBQQ__Quantity__c",
                                                         "contract_line_number" : "QuoteLine_External_ID__c",
                                                         "start_date" : "SBQQ__StartDate__c",
                                                         "end_date" : "SBQQ__EndDate__c"}, inplace = True)
 
+# format start and end date of quote lines
 contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__StartDate__c")
 contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__EndDate__c")
 
 # set pricing method to list
 contract_lines_with_pricebookentry_df["SBQQ__PricingMethod__c"] = "List"
+# set SBQQ__SubscriptionPricing__c to fixed price
 contract_lines_with_pricebookentry_df["SBQQ__SubscriptionPricing__c"] = "Fixed Price"
 # add migrated record
 contract_lines_with_pricebookentry_df['Migrated_Record__c'] = True
+# set subscription term to 12
 contract_lines_with_pricebookentry_df['SBQQ__SubscriptionTerm__c'] = 12
+# copy list price of quote line to unit cost since all quotelines are quantity of 1
 contract_lines_with_pricebookentry_df['SBQQ__UnitCost__c'] = contract_lines_with_pricebookentry_df['SBQQ__ListPrice__c']
-
-print(contract_lines_with_pricebookentry_df.head())
 
 # insert net new records into salesforce QuoteLine object
 # upload the records to salesforce
