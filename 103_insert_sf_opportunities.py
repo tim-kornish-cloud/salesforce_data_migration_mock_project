@@ -31,8 +31,9 @@ pd.set_option('display.max_columns', None)
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 database = 'mssql'
+# set object name to insert records into salesforce
 object = 'Opportunity'
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # success file path
@@ -100,7 +101,9 @@ sf_Pricebook2_df = SF_Utils.load_query_with_lookups_into_dataframe(Pricebook2_qu
 # encode the dataframe before uploading to delete
 sf_Pricebook2_df = Utils.encode_df(sf_Pricebook2_df)
 
+# set pricebook id on df to be inserted into Opportunities
 contracts_with_accounts_df["Pricebook2Id"] = sf_Pricebook2_df.iloc[0,0]
+contracts_with_accounts_df.rename(columns = {"Id":"AccountId"}, inplace = True)
 
 # query existing Contacts from salesforce
 # query string to select records from salesforce
@@ -113,20 +116,13 @@ sf_opportunity_df = SF_Utils.load_query_with_lookups_into_dataframe(opportunity_
 # encode the dataframe before uploading to delete
 sf_opportunity_df = Utils.encode_df(sf_opportunity_df)
 
-
-# print(sf_opportunity_df.head())
-# print(contracts_with_accounts_df.head())
-
 # perform merge of staging contracts and salesforce opportunitys
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_opportunity_df) != 0:
     # merge the csv data with the salesforce data to match SF Ids to the CSV Contracts
     both_df, sf_opportunity_only_df, opportunity_to_insert_df = Utils.get_df_diffs(sf_opportunity_df, contracts_with_accounts_df, left_on = ['Opportunity_External_ID__c'], right_on = ['contract_number'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
-    # drop id columns and _merge column
-    # print(both_df.head())
-    # print(sf_opportunity_only_df.head())
-    # print(opportunity_to_insert_df.head())
-
+    # drop extra columns
+    opportunity_to_insert_df.drop(['_merge', 'Id', 'Opportunity_External_ID__c'], axis = 1, inplace = True)
 else:
     # if there are no matching contracts in SF, copy and load the entire dataframe
     opportunity_to_insert_df = contracts_with_accounts_df
@@ -135,16 +131,17 @@ else:
 opportunity_to_insert_df.drop(['end_date'], axis = 1, inplace = True)
 
 # rename columns to Salesforce field naming conventions
-opportunity_to_insert_df.rename(columns = {"Id":"AccountId",
-                                        "contract_number" : "Opportunity_External_ID__c",
-                                        "start_date" : "CloseDate" }, inplace = True)
+opportunity_to_insert_df.rename(columns = {"contract_number" : "Opportunity_External_ID__c",
+                                           "start_date" : "CloseDate" }, inplace = True)
+# set StageName = ClosedWon
 opportunity_to_insert_df["StageName"] = "Closed Won"
+# Opps require a name, set to the External ID value
 opportunity_to_insert_df["Name"] = opportunity_to_insert_df["Opportunity_External_ID__c"]
+# format CloseDate before attempting insert
 opportunity_to_insert_df = SF_Utils.format_date_to_salesforce_date(opportunity_to_insert_df, "CloseDate")
 
 # add migrated record tag
 opportunity_to_insert_df['Migrated_Record__c'] = True
-print(opportunity_to_insert_df.head())
 
 # insert net new records into salesforce Contact object
 # upload the records to salesforce
