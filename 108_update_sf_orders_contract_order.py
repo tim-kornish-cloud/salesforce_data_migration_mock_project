@@ -68,4 +68,4 @@ sf_orders_df = Utils.encode_df(sf_orders_df)
 #
 sf_orders_df['SBQQ__Contracted__C'] = True
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, object, 'update', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, object, 'update', success_file, fallout_file, batch_size = 10)
