@@ -8,6 +8,7 @@
   * [Migration Execution Scripts](#Migration-Execution-Scripts)
   * [Migration Backout Delete Scripts](#Migration-Backout-Delete-Scripts)
   * [Output and Reporting](#Output-and-Reporting)
+  * [Database Utilities Class](#Database-Utilities-Class)
 * [Create mock data from Mockaroo](#Create-mock-data-from-Mockaroo)
     * [Following Objects](#Following-Objects)
     * [Create relationships for](#Create-relationships-for)
@@ -25,9 +26,25 @@
 ### Source Database
   - MySQL_source_tables/
     - holds four SQL scripts each to create a single table to hold source data.
+    - create_account_table.SQL
+    - create_contacts_table.SQL
+    - create_contract_lines_table.SQL
+    - create_contracts_table.SQL
+  - load_mock_account_data_to_source_mysql.py
+  - load_mock_contact_data_to_source_mysql.py
+  - load_mock_contract_data_to_source_mysql.py
+  - load_mock_contract_line_data_to_source_mysql.py
 ### Staging Database
   - MSSQL_staging_tables/
     - holds four SQL scripts that mirror the source tables to set up in MSSQL tables
+    - create_source_account_staging.SQL
+    - create_source_contact_staging.SQL
+    - create_source_contract_staging.SQL
+    - create_source_contract_lines_staging.SQL
+  - migrate_source_account_data_to_staging_mssql.py
+  - migrate_source_contact_data_to_staging_mssql.py
+  - migrate_source_contract_data_to_staging_mssql.py
+  - migrate_source_contract_line_data_to_staging_mssql.py
 ### Migration Execution Scripts
   - 101_insert_sf_accounts.py
   - 102_insert_sf_contacts.py
@@ -55,6 +72,9 @@
     - DELETE/
     - INESRT/
     - UPDATE/
+### Database Utilities Class
+- custom_db_utilities.py
+  - Holds functions for pulling data from several Database as well as perform INSERT, DELETE, and UPDATE calls. Used to load data from CSV to MySQL, from MySQL to MSSQL, and from MSSQL to Salesforce.
 
 ## Create mock data from Mockaroo
 ### Following Objects
