@@ -3,22 +3,22 @@
 ## Table of Contents
 * [File Structure](#File-Structure)
 * [Create mock data from Mockaroo](#Create-mock-data-from-Mockaroo)
-    * [Following Objects:](#Following Objects:)
-    * [Create relationships from:](Create relationships from:)
+    * [Following Objects](#Following-Objects)
+    * [Create relationships for](#Create-relationships-for)
 * [Create Source MySQL Database](#Create-Source-MySQL-Database)
 * [Set up intermediary staging database on MSSQL tables](#Set-up-intermediary-staging-database-on-MSSQL-tables)
-* [Set up Salesforce Environment with Salesforce CPQ](#Set up Salesforce Environment with Salesforce CPQ)
-* [Add custom fields to objects in Salesforce to track migrated records](# Add-custom-fields-to-objects-in-Salesforce-to-track-migrated-records)
+* [Set up Salesforce Environment with Salesforce CPQ](#Set-up-Salesforce-Environment-with-Salesforce-CPQ)
+* [Add custom fields to objects in Salesforce to track migrated records](#Add-custom-fields-to-objects-in-Salesforce-to-track-migrated-records)
 
 ## File Structure
 
 ## Create mock data from Mockaroo
-### Following Objects:
+### Following Objects
 - Account
 - Contact
 - Contract
 - Contract line.
-### Create relationships from:
+### Create relationships for
 - Account->Contact
 - Account->Contract
 - Contract->Contract line
