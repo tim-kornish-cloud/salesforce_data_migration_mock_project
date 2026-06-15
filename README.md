@@ -34,6 +34,7 @@
     - create_contacts_table.SQL
     - create_contract_lines_table.SQL
     - create_contracts_table.SQL
+  - Execute four scripts to load csv data into source DB.
   1. load_mock_account_data_to_source_mysql.py
   2. load_mock_contact_data_to_source_mysql.py
   3. load_mock_contract_data_to_source_mysql.py
@@ -45,6 +46,7 @@
     - create_source_contact_staging.SQL
     - create_source_contract_staging.SQL
     - create_source_contract_lines_staging.SQL
+  - Execute four scripts to migrate source data from MySQL to stagin MSSQL DB.
   1. migrate_source_account_data_to_staging_mssql.py
   2. migrate_source_contact_data_to_staging_mssql.py
   3. migrate_source_contract_data_to_staging_mssql.py
