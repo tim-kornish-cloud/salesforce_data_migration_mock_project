@@ -3,7 +3,7 @@ Author: Timothy Kornish
 CreatedDate: August - 24 - 2025
 Description: Load csv mock data into a pandas dataframes.
              log into a MySQL Database.
-             insert each csv of accounts into the Accounts table.
+             insert csv of accounts into the Accounts table.
 """
 
 import numpy as np

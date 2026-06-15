@@ -3,9 +3,7 @@ Author: Timothy Kornish
 CreatedDate: August - 24 - 2026
 Description: Load csv mock data into a pandas dataframes.
              log into a MySQL Database.
-             insert each csv data set into respective tables
-             - contracts
-
+             insert csv of contract lines into contract_lines tables.
 """
 
 import numpy as np
@@ -25,12 +23,6 @@ env = 'localhost'
 
 # set database to MySQL
 database = "MySQL"
-
-# number of records to attempted
-num_of_records = 10
-
-# starting index to choose records
-record_start = 10
 
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
