@@ -23,7 +23,7 @@ Utils = Custom_Utilities()
 # create instance of credentials class where creds are stored to load into the script
 Cred = Credentials()
 
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # declare which environment this script will perform operations against,
@@ -31,7 +31,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
-#set object for output files
+# set object for output files
 object = "OrderItem"
 
 
@@ -40,11 +40,11 @@ success_file_1 = dir_path + "\\Output\\UPDATE\\SUCCESS_1_UPDATE_" + sf_environme
 # fallout file path
 fallout_file_1 = dir_path + "\\Output\\UPDATE\\FALLOUT_1_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # success file path
-success_file_4 = dir_path + "\\Output\\UPDATE\\SUCCESS_4_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+success_file_4 = dir_path + "\\Output\\DELETE\\SUCCESS_4_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file_4 = dir_path + "\\Output\\UPDATE\\FALLOUT_4_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+fallout_file_4 = dir_path + "\\Output\\DELETE\\FALLOUT_4_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
-#set object for output files
+# set object for output files
 object = "Order"
 
 # success file path
@@ -53,14 +53,14 @@ success_file_2 = dir_path + "\\Output\\UPDATE\\SUCCESS_2_UPDATE_" + sf_environme
 fallout_file_2 = dir_path + "\\Output\\UPDATE\\FALLOUT_2_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # success file path
-success_file_3 = dir_path + "\\Output\\DELETE\\SUCCESS_3_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+success_file_3 = dir_path + "\\Output\\UPDATE\\SUCCESS_3_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file_3 = dir_path + "\\Output\\DELETE\\FALLOUT_3_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+fallout_file_3 = dir_path + "\\Output\\UPDATE\\FALLOUT_3_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # success file path
-success_file_5 = dir_path + "\\Output\\DELETE\\SUCCESS_5_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+success_file_5 = dir_path + "\\Output\\DELETE\\SUCCESS_5_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file_5 = dir_path + "\\Output\\DELETE\\FALLOUT_5_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+fallout_file_5 = dir_path + "\\Output\\DELETE\\FALLOUT_5_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 
 # get credentials for salesforce login
@@ -79,7 +79,6 @@ order_item_query = "SELECT Id FROM OrderItem WHERE SBQQ__QuoteLine__r.Migrated_R
 # query salesforce and return the order_items to be deleted
 order_item_query_results = SF_Utils.query_salesforce(sf, order_item_query)
 
-#print(order_item_query_results)
 # convert query results to a dataframe
 sf_order_items_df = SF_Utils.load_query_with_lookups_into_dataframe(order_item_query_results)
 # encode the dataframe before uploading to delete
@@ -94,30 +93,34 @@ order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = Tr
 # query salesforce and return the orders to be deleted
 order_query_results = SF_Utils.query_salesforce(sf, order_query)
 
-#print(order_query_results)
 # convert query results to a dataframe
 sf_orders_df = SF_Utils.load_query_with_lookups_into_dataframe(order_query_results)
 # encode the dataframe before uploading to delete
 sf_orders_df = Utils.encode_df(sf_orders_df)
 
-# update contracted
+# update contracted to false
 sf_orders_df['SBQQ__Contracted__c'] = False
+# remove relationship between order and quote setting SBQQ__Quote__c to null on orders
 sf_orders_df['SBQQ__Quote__c'] = ""
 # upload the records to salesforce for update
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_3, fallout_file_3)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_2, fallout_file_2)
 
 # update status  = draft
 sf_orders_df['Status'] = 'Draft'
+# remove contracted column
 sf_orders_df.drop(['SBQQ__Contracted__c'], axis = 1, inplace = True)
 # upload the records to salesforce for update
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_4, fallout_file_4)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_3, fallout_file_3)
 
+# When deleting only sumbit Id column
 sf_order_items_df = sf_order_items_df[['Id']]
 
 # delete migrated salesforce order_item records
 # upload the records to salesforce for deletion
 SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'delete', success_file_4, fallout_file_4)
 
+# When deleting only sumbit Id column
 sf_orders_df = sf_orders_df[['Id']]
-# upload the records to salesforce for update
+
+# upload the records to salesforce for deletion
 SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'delete', success_file_5, fallout_file_5)
