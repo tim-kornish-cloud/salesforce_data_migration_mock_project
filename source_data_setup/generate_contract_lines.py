@@ -128,30 +128,34 @@ contract_lines_with_install_df = pd.merge(contract_line_installation_df, contrac
 contract_lines_with_sla_df = pd.merge(contract_line_sla_df, contract_df, on = "id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
 contract_lines_with_sla_df = pd.merge(contract_lines_with_sla_df, account_id_df, on = "account_number_external_id", how ="inner", suffixes = ("_left", "_right"), indicator = False)
 
+# set up product naming convention before loading values into source DB
 contract_lines_with_gen_df["product"] = contract_lines_with_gen_df["gen_type"].str.cat(contract_lines_with_gen_df["gen_type_capacity"], sep = "-", na_rep = "")
 contract_lines_with_install_df["product"] = "install - " + contract_lines_with_install_df["installation"]
 contract_lines_with_sla_df["product"] = "sla - " + contract_lines_with_sla_df["sla"]
 
+# dropping old columns so all dataframe column names line up
 contract_lines_with_gen_df.drop(['gen_type', 'gen_type_capacity', 'id', 'account_number_external_id'], axis = 1, inplace = True)
 contract_lines_with_install_df.drop([ 'installation', 'id', 'account_number_external_id'], axis = 1, inplace = True)
 contract_lines_with_sla_df.drop(['id_left', 'account_number_external_id', 'id_right', 'sla'], axis = 1, inplace = True)
 
-
+# print generator df to verify conversion
 print(len(contract_lines_with_gen_df))
 print(contract_lines_with_gen_df.columns)
 print(contract_lines_with_gen_df.head())
 
+# print install df to verify conversion
 print(len(contract_lines_with_install_df))
 print(contract_lines_with_install_df.columns)
 print(contract_lines_with_install_df.head())
 
+# print sla df to verify conversion
 print(len(contract_lines_with_sla_df))
 print(contract_lines_with_sla_df.columns)
 print(contract_lines_with_sla_df.head())
 
 # concat all dfs to create a single csv of contract_liness to pull from
 contract_lines_df = pd.concat([contract_lines_with_gen_df, contract_lines_with_install_df, contract_lines_with_sla_df], axis = 0)
-#
+# set quantity of each contract line to 1
 contract_lines_df["quantity"] = 1
 
 #print columns
@@ -159,4 +163,5 @@ print(len(contract_lines_df))
 print(contract_lines_df.columns)
 print(contract_lines_df.head())
 
+# output concatenated input files as a single file
 contract_lines_df.to_csv(contract_lines_list_csv_file, index = False)
