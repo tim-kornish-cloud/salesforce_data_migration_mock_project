@@ -53,10 +53,10 @@
   1. 101_insert_sf_accounts.py
   2. 102_insert_sf_contacts.py
   3. 103_insert_sf_opportunities.py
-    - prior to executing script 104_insert_sf_quotes.py, turn off CPQ triggers
+  - prior to executing script 104_insert_sf_quotes.py, turn off CPQ triggers
   4. 104_insert_sf_quotes.py
   5. 105_insert_sf_quote_lines.py
-    - prior to executing script 106_update_sf_quotes.py, turn on CPQ triggers
+  - prior to executing script 106_update_sf_quotes.py, turn on CPQ triggers
   6. 106_update_sf_quotes.py
   7. 107_update_sf_orders_activate_order.py
   8. 108_update_sf_orders_contract_order.py
