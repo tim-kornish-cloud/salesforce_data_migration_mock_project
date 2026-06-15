@@ -28,13 +28,19 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sf_environment = 'Dev'
 # set database to Salesforce
 sf_database = "Salesforce"
-#set object for output files
+# set object for output files
 object = "Contract"
 
 # success file path
-success_file = dir_path + "\\Output\\DELETE\\SUCCESS_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+success_file_1 = dir_path + "\\Output\\UPDATE\\SUCCESS_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 # fallout file path
-fallout_file = dir_path + "\\Output\\DELETE\\FALLOUT_Delete_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+fallout_file_1 = dir_path + "\\Output\\UPDATE\\FALLOUT_UPDATE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+
+
+# success file path
+success_file_2 = dir_path + "\\Output\\DELETE\\SUCCESS_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
+# fallout file path
+fallout_file_2 = dir_path + "\\Output\\DELETE\\FALLOUT_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 # get credentials for salesforce login
 # get username from credentials
@@ -57,14 +63,16 @@ sf_contracts_df = SF_Utils.load_query_with_lookups_into_dataframe(contract_query
 # encode the dataframe before uploading to delete
 sf_contracts_df = Utils.encode_df(sf_contracts_df)
 
+# update contracts status to draft to deactivate
 sf_contracts_df['Status'] = 'Draft'
 
 # delete migrated salesforce contract records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_contracts_df, 'Contract', 'update', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_contracts_df, 'Contract', 'update', success_file_1, fallout_file_1)
 
+# remove status column before deleting contracts
 sf_contracts_df.drop(['Status'], axis = 1, inplace = True)
 
 # delete migrated salesforce contract records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_contracts_df, 'Contract', 'delete', success_file, fallout_file)
+SF_Utils.upload_dataframe_to_salesforce(sf, sf_contracts_df, 'Contract', 'delete', success_file_2, fallout_file_2)
