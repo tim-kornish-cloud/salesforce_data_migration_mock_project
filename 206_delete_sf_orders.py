@@ -47,7 +47,7 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = True"
+order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = True CreatedBy.Name = 'Timothy Kornish'"
 # query salesforce and return the orders to be deleted
 order_query_results = SF_Utils.query_salesforce(sf, order_query)
 
