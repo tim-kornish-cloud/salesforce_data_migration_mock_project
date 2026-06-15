@@ -15,7 +15,6 @@
 * [Set up intermediary staging database on MSSQL tables](#Set-up-intermediary-staging-database-on-MSSQL-tables)
 * [Set up Salesforce Environment with Salesforce CPQ](#Set-up-Salesforce-Environment-with-Salesforce-CPQ)
 * [Add custom fields to objects in Salesforce to track migrated records](#Add-custom-fields-to-objects-in-Salesforce-to-track-migrated-records)
-* [Script Execution Order](#Script-Execution-Order)
 
 ## File Structure
 ### Source Data And Source Data Setup
@@ -33,8 +32,10 @@
   - 101_insert_sf_accounts.py
   - 102_insert_sf_contacts.py
   - 103_insert_sf_opportunities.py
+    - prior to executing script 104_insert_sf_quotes.py, turn off CPQ triggers
   - 104_insert_sf_quotes.py
   - 105_insert_sf_quote_lines.py
+    - prior to executing script 106_update_sf_quotes.py, turn on CPQ triggers
   - 106_update_sf_quotes.py
   - 107_update_sf_orders_activate_order.py
   - 108_update_sf_orders_contract_order.py
@@ -93,5 +94,3 @@
 - SBQQ__QuoteLine__c
   - Migrated_Record__c
   - QuoteLine_External_ID__c
-
-## Script Execution Order
