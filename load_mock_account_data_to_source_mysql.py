@@ -1,14 +1,9 @@
 """
 Author: Timothy Kornish
-CreatedDate: August - 24 - 2026
+CreatedDate: August - 24 - 2025
 Description: Load csv mock data into a pandas dataframes.
              log into a MySQL Database.
-             insert each csv data set into respective tables
-             - accounts
-             - contacts
-             - contracts
-             - contract_ilnes
-
+             insert each csv of accounts into the Accounts table.
 """
 
 import numpy as np
@@ -28,12 +23,6 @@ env = 'localhost'
 
 # set database to MySQL
 database = "MySQL"
-
-# number of records to attempted
-num_of_records = 10
-
-# starting index to choose records
-record_start = 10
 
 # set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
