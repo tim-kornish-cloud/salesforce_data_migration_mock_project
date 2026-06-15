@@ -75,7 +75,7 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 
 # query string to select records from salesforce
-order_item_query = "SELECT Id FROM OrderItem WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True"
+order_item_query = "SELECT Id FROM OrderItem WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True OR CreatedBy.Name = 'Timothy Kornish'"
 # query salesforce and return the order_items to be deleted
 order_item_query_results = SF_Utils.query_salesforce(sf, order_item_query)
 
@@ -90,7 +90,7 @@ sf_order_items_df['SBQQ__Status__c'] = 'Draft'
 SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'update', success_file_1, fallout_file_1)
 
 # query string to select records from salesforce
-order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = True"
+order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = True OR CreatedBy.Name = 'Timothy Kornish'"
 # query salesforce and return the orders to be deleted
 order_query_results = SF_Utils.query_salesforce(sf, order_query)
 
@@ -112,7 +112,7 @@ sf_orders_df.drop(['SBQQ__Contracted__c'], axis = 1, inplace = True)
 # upload the records to salesforce for update
 SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_4, fallout_file_4)
 
-print(sf_order_items_df.head())
+sf_order_items_df = sf_order_items_df[['Id']]
 
 # delete migrated salesforce order_item records
 # upload the records to salesforce for deletion
