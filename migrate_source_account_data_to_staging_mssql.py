@@ -1,10 +1,9 @@
 """
 Author: Timothy Kornish
-CreatedDate: August - 25 - 2026
+CreatedDate: August - 25 - 2025
 Description: log into a MySQL Database.
-             query contract records.
-             log into MSSQL staging database and insert records into staging table
-             - accounts
+             query account records.
+             log into MSSQL staging database and insert records into accounts staging table
 """
 
 import numpy as np
