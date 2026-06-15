@@ -31,8 +31,9 @@ pd.set_option('display.max_columns', None)
 # can have multiple environments in the same script at the same time
 environment = 'localhost'
 database = 'mssql'
+# set object name to insert records into salesforce
 object = 'SBQQ__Quote__c'
-#set up directory pathway to load csv data and output fallout and success results to
+# set up directory pathway to load csv data and output fallout and success results to
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # success file path
@@ -88,6 +89,7 @@ if len(sf_accounts_df) != 0:
     contracts_with_accounts_df, sf_only_accounts, mssql_contracts_only_df = Utils.get_df_diffs(sf_accounts_df, stg_contract_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contracts_with_accounts_df.drop(["account_number_external_id",  "Account_Number_External_ID__c", "_merge"], axis = 1, inplace = True)
+    # rename column from Id to SBQQ__Account__c
     contracts_with_accounts_df.rename(columns = {"Id" : "SBQQ__Account__c"}, inplace = True)
 
 # query Standard Pricebook from salesforce
@@ -101,6 +103,7 @@ sf_Pricebook2_df = SF_Utils.load_query_with_lookups_into_dataframe(Pricebook2_qu
 # encode the dataframe before uploading to delete
 sf_Pricebook2_df = Utils.encode_df(sf_Pricebook2_df)
 
+# set pricebook id on quote records to be inserted
 contracts_with_accounts_df["SBQQ__PriceBook__c"] = sf_Pricebook2_df.iloc[0,0]
 contracts_with_accounts_df["SBQQ__PricebookId__c"] = sf_Pricebook2_df.iloc[0,0]
 
@@ -122,6 +125,7 @@ if len(sf_opportunity_df) != 0:
     quotes_with_opps_df, sf_opportunity_only_df, quote_without_opps_df = Utils.get_df_diffs(sf_opportunity_df, contracts_with_accounts_df, left_on = ['Opportunity_External_ID__c'], right_on = ['contract_number'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # rename Id column to SBQQ__Opportunity2__c
     quotes_with_opps_df.rename(columns = {"Id" : "SBQQ__Opportunity2__c"}, inplace = True)
+    # remove extra columns
     quotes_with_opps_df.drop(["_merge", "Opportunity_External_ID__c"], axis = 1, inplace = True)
 
 # query existing Contacts from salesforce
@@ -155,12 +159,16 @@ quote_to_insert_df = SF_Utils.format_date_to_salesforce_date(quote_to_insert_df,
 
 # add migrated record tag
 quote_to_insert_df['Migrated_Record__c'] = True
+# start primary as false, will be updated to true in later script
 quote_to_insert_df['SBQQ__Primary__c'] = False
+# add subscription term to quote
 quote_to_insert_df['SBQQ__SubscriptionTerm__c'] = 12
+# set contracting method on quote
 quote_to_insert_df['SBQQ__ContractingMethod__c'] = 'By Subscription End Date'
+# set type of quote
 quote_to_insert_df['SBQQ__Type__c'] = 'Quote'
+# set status of quote
 quote_to_insert_df['SBQQ__Status__c'] = 'Draft'
-print(quote_to_insert_df.head())
 
 # insert net new records into salesforce Quote object
 # upload the records to salesforce
