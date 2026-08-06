@@ -18,6 +18,7 @@ import coloredlogs
 # pandas and numpy
 import numpy as np
 import pandas as pd
+from pandas.io import sql
 # salesforce connector
 from simple_salesforce import Salesforce
 # MSSQL connector
@@ -383,7 +384,7 @@ class Salesforce_Utilities:
                         # write the dataframe to the file using a commma as the delimeter
                         fallout_df.to_csv(file, sep = ",", index = False)
                 # return both the passing and fallout dataframes
-                return [passing_df, fallout_df]
+                return (passing_df, fallout_df)
             # no records are in the dataframe, nothing to process
             else:
                 # log to console, nothing included in dataframe to process
@@ -1996,3 +1997,28 @@ class Custom_Utilities:
         except Exception as e:
             # log error when returning a datetime string of now
             log.exception(f"[Error logging message...{e}]")
+
+    def generate_sql_create_table_string_from_df(self, df, table_name, convert_types = False, sql_type = "MSSQL"):
+        """
+        Description: Analyze a pandas dataframe and generate an SQL statement
+                     to create a table with all required columns with correctly
+                     defined metadata acceptable values
+
+        df             - dataframe to generate a Create Table call from
+        convert_types  - convert string from default data types to type specified in field sql_type
+        sql_type       - String, default to MSSQL, in future add support for postgres and others
+
+        Return:        - SQL Create Table String
+        """
+        # try except block
+        try:
+            # log message to console
+            log.info(f"[Generate SQL for new table: {table_name}]")
+            create_table_sql = sql.get_schema(df, name = table_name)
+
+            # return datetime of right now
+            return create_table_sql
+        # exception block - error returning a datetime string of now
+        except Exception as e:
+            # log error when returning a datetime string of now
+            log.exception(f"[Error generating create table string...{e}]")
