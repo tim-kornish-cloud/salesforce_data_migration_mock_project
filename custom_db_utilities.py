@@ -636,6 +636,50 @@ class MSSQL_Utilities:
             # log error when deleting rows in mssql table
             log.exception(f"[Error deleting rows in mssql table...{e}]")
 
+    def execute_sql(self, connection, cursor, sql):
+        """Description: specific for modifying the schema of a db or the tables,
+           do not use this function for select/insert/update/delete of records.
+           Parameters:
+
+           connection               - MSSQL login connection
+           cursor                   - MSSQL connection cursor
+           sql                      - SQL to create/update/delete tables
+
+           Return:                  - None - execute sql statement
+        """
+        # try except block
+        try:
+            cursor.execute(sql)
+            # commit the sql statement
+            connection.commit()
+            # log to console  executed sql statement
+            log.info(f"[Attempting SQL executed against MSSQL...]")
+        # exception block - error
+        except Exception as e:
+            # log error when attempting to execute query
+            log.exception(f"[Error executing query...{e}]")
+
+    def check_it_table_exists(self, connection, cursor, table_name):
+        """Description: perform quick check if table exists by querying a single record from the table.
+           Parameters:
+
+           connection               - MSSQL login connection
+           cursor                   - MSSQL connection cursor
+           table_name               - table to check if already exists in DB
+
+           Return:                  - Boolean, true if table exists, false if table does not exist.
+        """
+        # try except block
+        try:
+            # log to console  executed sql statement
+            log.info(f"[checking if {table_name} exists:...]")
+            return cursor.tables(table=table_name).fetchone()
+        # exception block - error
+        except Exception as e:
+            # log error when attempting to execute query
+            log.exception(f"[Error checking if table exists, check table spelling...{e}]")
+
+
 class MySQL_Utilities:
     def __init__(self):
         """Constructor Parameters:
@@ -1998,15 +2042,16 @@ class Custom_Utilities:
             # log error when returning a datetime string of now
             log.exception(f"[Error logging message...{e}]")
 
-    def generate_sql_create_table_string_from_df(self, df, table_name, convert_types = False, sql_type = "MSSQL"):
+    def generate_sql_create_table_string_from_df(self, df, table_name, auto_gen = False, sql_type = "MSSQL"):
         """
         Description: Analyze a pandas dataframe and generate an SQL statement
                      to create a table with all required columns with correctly
                      defined metadata acceptable values
 
-        df             - dataframe to generate a Create Table call from
-        convert_types  - convert string from default data types to type specified in field sql_type
-        sql_type       - String, default to MSSQL, in future add support for postgres and others
+        df              - dataframe to generate a Create Table call from
+        table_name      - String, name of new table to create, should include the database name, default -> [db_name].[dbo].[table_name]
+        auto_gen        - Boolean, default = False, use built in pandas SQL get_schema function
+        sql_type        - String, default to MSSQL, in future add support for postgres and others
 
         Return:        - SQL Create Table String
         """
@@ -2014,9 +2059,30 @@ class Custom_Utilities:
         try:
             # log message to console
             log.info(f"[Generate SQL for new table: {table_name}]")
-            create_table_sql = sql.get_schema(df, name = table_name)
+            if auto_gen:
+                create_table_sql = sql.get_schema(df, name = table_name)
+            else:
+                create_table_sql = f"""USE [Data_Engineering] SET ANSI_NULLS ON SET QUOTED_IDENTIFIER ON DROP TABLE IF EXISTS {table_name} CREATE TABLE {table_name} (
+                """
+                # loop through each column in the dataframe to format
+                for index, col in enumerate(df.columns):
+                    # confirm the loop index exists in the range of columns
+                    if index < len(df.columns):
+                        # check if type == int
+                        if df[col].dtypes == "int64":
+                            create_table_sql = create_table_sql + f"[{col}] INT NULL,\n"
+                        # check if type == string, date, or object
+                        if df[col].dtypes == "object":
+                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR](250) NULL,\n"
+                        # check if type == float
+                        if df[col].dtypes == "float64":
+                            create_table_sql = create_table_sql + f"[{col}] DECIMAL(16,2) NULL,\n"
+                        # check if type == boolean
+                        if df[col].dtypes == "bool":
+                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR](5) NULL,\n"
 
-            # return datetime of right now
+                create_table_sql = create_table_sql[:-2] + """) ON [PRIMARY]"""
+            # return sql create table statement
             return create_table_sql
         # exception block - error returning a datetime string of now
         except Exception as e:
