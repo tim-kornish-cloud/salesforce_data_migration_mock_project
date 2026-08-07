@@ -679,7 +679,6 @@ class MSSQL_Utilities:
             # log error when attempting to execute query
             log.exception(f"[Error checking if table exists, check table spelling...{e}]")
 
-
 class MySQL_Utilities:
     def __init__(self):
         """Constructor Parameters:
@@ -2042,7 +2041,7 @@ class Custom_Utilities:
             # log error when returning a datetime string of now
             log.exception(f"[Error logging message...{e}]")
 
-    def generate_sql_create_table_string_from_df(self, df, table_name, auto_gen = False, sql_type = "MSSQL"):
+    def generate_sql_create_table_string_from_df(self, df, table_name, auto_gen = False, sql_type = "MSSQL", varchar_size = 250):
         """
         Description: Analyze a pandas dataframe and generate an SQL statement
                      to create a table with all required columns with correctly
@@ -2073,7 +2072,7 @@ class Custom_Utilities:
                             create_table_sql = create_table_sql + f"[{col}] INT NULL,\n"
                         # check if type == string, date, or object
                         if df[col].dtypes == "object":
-                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR](250) NULL,\n"
+                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR]({varchar_size}) NULL,\n"
                         # check if type == float
                         if df[col].dtypes == "float64":
                             create_table_sql = create_table_sql + f"[{col}] DECIMAL(16,2) NULL,\n"
