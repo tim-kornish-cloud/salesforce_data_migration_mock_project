@@ -679,6 +679,62 @@ class MSSQL_Utilities:
             # log error when attempting to execute query
             log.exception(f"[Error checking if table exists, check table spelling...{e}]")
 
+    def upload_reports(self, conneciton, cursor, table_name, df, column_types):
+        """Description: perform quick check if table exists by querying a single record from the table.
+           Parameters:
+
+           connection               - MSSQL login connection
+           cursor                   - MSSQL connection cursor
+           table_name               - table to check if already exists in DB
+
+           Return:                  - Boolean, true if table exists, false if table does not exist.
+        """
+    def generate_sql_create_table_string_from_df(self, df, table_name, auto_gen = False, varchar_size = 250):
+        """
+        Description: Analyze a pandas dataframe and generate an SQL statement
+                     to create a table with all required columns with correctly
+                     defined metadata acceptable values
+
+        df              - dataframe to generate a Create Table call from
+        table_name      - String, name of new table to create, should include the database name, default -> [db_name].[dbo].[table_name]
+        auto_gen        - Boolean, default = False, use built in pandas SQL get_schema function
+
+        Return:        - SQL Create Table String
+        """
+        # try except block
+        try:
+            # log message to console
+            log.info(f"[Generate SQL for new table: {table_name}]")
+            if auto_gen:
+                create_table_sql = sql.get_schema(df, name = table_name)
+            else:
+                create_table_sql = f"""USE [Data_Engineering] SET ANSI_NULLS ON SET QUOTED_IDENTIFIER ON DROP TABLE IF EXISTS {table_name} CREATE TABLE {table_name} (
+                """
+                # loop through each column in the dataframe to format
+                for index, col in enumerate(df.columns):
+                    # confirm the loop index exists in the range of columns
+                    if index < len(df.columns):
+                        # check if type == int
+                        if df[col].dtypes == "int64":
+                            create_table_sql = create_table_sql + f"[{col}] INT NULL,\n"
+                        # check if type == string, date, or object
+                        if df[col].dtypes == "object":
+                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR]({varchar_size}) NULL,\n"
+                        # check if type == float
+                        if df[col].dtypes == "float64":
+                            create_table_sql = create_table_sql + f"[{col}] DECIMAL(16,2) NULL,\n"
+                        # check if type == boolean
+                        if df[col].dtypes == "bool":
+                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR](5) NULL,\n"
+
+                create_table_sql = create_table_sql[:-2] + """) ON [PRIMARY]"""
+            # return sql create table statement
+            return create_table_sql
+        # exception block - error returning a datetime string of now
+        except Exception as e:
+            # log error when returning a datetime string of now
+            log.exception(f"[Error generating create table string...{e}]")
+
 class MySQL_Utilities:
     def __init__(self):
         """Constructor Parameters:
@@ -2040,50 +2096,3 @@ class Custom_Utilities:
         except Exception as e:
             # log error when returning a datetime string of now
             log.exception(f"[Error logging message...{e}]")
-
-    def generate_sql_create_table_string_from_df(self, df, table_name, auto_gen = False, sql_type = "MSSQL", varchar_size = 250):
-        """
-        Description: Analyze a pandas dataframe and generate an SQL statement
-                     to create a table with all required columns with correctly
-                     defined metadata acceptable values
-
-        df              - dataframe to generate a Create Table call from
-        table_name      - String, name of new table to create, should include the database name, default -> [db_name].[dbo].[table_name]
-        auto_gen        - Boolean, default = False, use built in pandas SQL get_schema function
-        sql_type        - String, default to MSSQL, in future add support for postgres and others
-
-        Return:        - SQL Create Table String
-        """
-        # try except block
-        try:
-            # log message to console
-            log.info(f"[Generate SQL for new table: {table_name}]")
-            if auto_gen:
-                create_table_sql = sql.get_schema(df, name = table_name)
-            else:
-                create_table_sql = f"""USE [Data_Engineering] SET ANSI_NULLS ON SET QUOTED_IDENTIFIER ON DROP TABLE IF EXISTS {table_name} CREATE TABLE {table_name} (
-                """
-                # loop through each column in the dataframe to format
-                for index, col in enumerate(df.columns):
-                    # confirm the loop index exists in the range of columns
-                    if index < len(df.columns):
-                        # check if type == int
-                        if df[col].dtypes == "int64":
-                            create_table_sql = create_table_sql + f"[{col}] INT NULL,\n"
-                        # check if type == string, date, or object
-                        if df[col].dtypes == "object":
-                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR]({varchar_size}) NULL,\n"
-                        # check if type == float
-                        if df[col].dtypes == "float64":
-                            create_table_sql = create_table_sql + f"[{col}] DECIMAL(16,2) NULL,\n"
-                        # check if type == boolean
-                        if df[col].dtypes == "bool":
-                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR](5) NULL,\n"
-
-                create_table_sql = create_table_sql[:-2] + """) ON [PRIMARY]"""
-            # return sql create table statement
-            return create_table_sql
-        # exception block - error returning a datetime string of now
-        except Exception as e:
-            # log error when returning a datetime string of now
-            log.exception(f"[Error generating create table string...{e}]")
