@@ -127,4 +127,22 @@ accounts_to_insert_df = accounts_to_insert_df.head(size)
 
 # insert net new records into salesforce account object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, object, 'insert', success_file, fallout_file)
+passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, object, 'insert', success_file, fallout_file)
+
+# mssql table name the dataframe is being inserted into
+table_name = "[dbo].[Success_Accounts]"
+
+# check if reporting table already exists, if not create table
+if not MSSQL_Utils.check_it_table_exists(connection, cursor, table_name):
+    # create SQL string to create new table
+    sql_string = Utils.generate_sql_create_table_string_from_df(passing_df, table_name)
+    print(sql_string)
+    # execute SQL to generate new reporting table
+    MSSQL_Utils.execute_sql(connection, cursor, sql_string)
+
+# Load passing/fallout records into respective tables in database
+# hardcoding these types instead of the entire dataframe
+column_types = ('str', 'str', 'str', 'int', 'str', 'int', 'int', 'str', 'int', 'str', 'str', 'str', 'str', 'str')
+
+# insert subset of the csv  from a dataframe into the mssql table
+MSSQL_Utils.insert_dataframe_into_mssql_table(connection, cursor, passing_df, table_name, column_types)
