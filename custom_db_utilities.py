@@ -689,6 +689,8 @@ class MSSQL_Utilities:
 
            Return:                  - Boolean, true if table exists, false if table does not exist.
         """
+
+
     def generate_sql_create_table_string_from_df(self, df, table_name, auto_gen = False, varchar_size = 250):
         """
         Description: Analyze a pandas dataframe and generate an SQL statement
