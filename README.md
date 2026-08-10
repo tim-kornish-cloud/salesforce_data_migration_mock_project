@@ -47,7 +47,7 @@
     - create_source_contact_staging.SQL
     - create_source_contract_staging.SQL
     - create_source_contract_lines_staging.SQL
-  - Execute four scripts to migrate source data from MySQL to stagin MSSQL DB.
+  - Execute four scripts to migrate source data from MySQL to staging MSSQL DB.
   1. migrate_source_account_data_to_staging_mssql.py
   2. migrate_source_contact_data_to_staging_mssql.py
   3. migrate_source_contract_data_to_staging_mssql.py
