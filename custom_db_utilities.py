@@ -659,7 +659,7 @@ class MSSQL_Utilities:
             # log error when attempting to execute query
             log.exception(f"[Error executing query...{e}]")
 
-    def check_it_table_exists(self, connection, cursor, table_name):
+    def check_if_table_exists(self, connection, cursor, table_name):
         """Description: perform quick check if table exists by querying a single record from the table.
            Parameters:
 
@@ -680,18 +680,19 @@ class MSSQL_Utilities:
             log.exception(f"[Error checking if table exists, check table spelling...{e}]")
 
     def upload_reports(self, conneciton, cursor, table_name, df, column_types):
-        """Description: perform quick check if table exists by querying a single record from the table.
+        """Description: create reporting table if non exists then upload results dataframe to report tables
            Parameters:
 
            connection               - MSSQL login connection
            cursor                   - MSSQL connection cursor
            table_name               - table to check if already exists in DB
+           df
+          column_types
 
            Return:                  - Boolean, true if table exists, false if table does not exist.
         """
 
-
-    def generate_sql_create_table_string_from_df(self, df, table_name, auto_gen = False, varchar_size = 250):
+    def generate_sql_create_table_string_from_df(self, df, table_name, drop_table = False, auto_gen = False, varchar_size = 250):
         """
         Description: Analyze a pandas dataframe and generate an SQL statement
                      to create a table with all required columns with correctly
@@ -699,7 +700,9 @@ class MSSQL_Utilities:
 
         df              - dataframe to generate a Create Table call from
         table_name      - String, name of new table to create, should include the database name, default -> [db_name].[dbo].[table_name]
+        drop_table = False
         auto_gen        - Boolean, default = False, use built in pandas SQL get_schema function
+        varchar_size = 250
 
         Return:        - SQL Create Table String
         """

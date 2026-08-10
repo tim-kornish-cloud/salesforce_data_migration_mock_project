@@ -136,7 +136,7 @@ passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to
 table_name = "[dbo].[Success_Accounts]"
 
 # check if reporting table already exists, if not create table
-if not MSSQL_Utils.check_it_table_exists(connection, cursor, table_name):
+if not MSSQL_Utils.check_if_table_exists(connection, cursor, table_name):
     # create SQL string to create new table
     sql_string = MSSQL_Utils.generate_sql_create_table_string_from_df(passing_df, table_name)
     # execute SQL to generate new reporting table
