@@ -63,6 +63,9 @@ select_query = """SELECT
 # accounts in the mssql table shown in the query above
 stg_account_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 
+# only keep subset of records to load to not surpass 5Mb storage limit of Salesforce Org.
+stg_account_df = stg_account_df.head(size)
+
 # get credentials for salesforce login
 # declare which environment this script will perform operations against,
 # can have multiple environments in the same script at the same time
@@ -122,29 +125,21 @@ accounts_to_insert_df.rename(columns={'phone' : 'Phone',
 # add migrated record tag
 accounts_to_insert_df['Migrated_Record__c'] = True
 
-# only keep subset of records to load to not surpass 5Mb storage limit of Salesforce Org.
-accounts_to_insert_df = accounts_to_insert_df.head(size)
-
 # insert net new records into salesforce account object
 # upload the records to salesforce
 passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, object, 'insert', success_file, fallout_file)
 
-# PUSH ALL BELOW INTO SINGLE FUNCTION
-
+# mssql table name the dataframe is being inserted into
+success_table_name = "[dbo].[Account_101_Success]"
 
 # mssql table name the dataframe is being inserted into
-table_name = "[dbo].[Success_Accounts]"
-
-# check if reporting table already exists, if not create table
-if not MSSQL_Utils.check_if_table_exists(connection, cursor, table_name):
-    # create SQL string to create new table
-    sql_string = MSSQL_Utils.generate_sql_create_table_string_from_df(passing_df, table_name)
-    # execute SQL to generate new reporting table
-    MSSQL_Utils.execute_sql(connection, cursor, sql_string)
+fallout_table_name = "[dbo].[Account_101_Fallout]"
 
 # Load passing/fallout records into respective tables in database
 # hardcoding these types instead of the entire dataframe
 column_types = ('str', 'str', 'str', 'int', 'str', 'int', 'int', 'str', 'int', 'str', 'str', 'str', 'str', 'str')
 
-# insert subset of the csv  from a dataframe into the mssql table
-MSSQL_Utils.insert_dataframe_into_mssql_table(connection, cursor, passing_df, table_name, column_types)
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, column_types, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, column_types, drop_table = True)
