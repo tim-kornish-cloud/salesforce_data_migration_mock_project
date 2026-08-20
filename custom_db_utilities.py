@@ -383,6 +383,8 @@ class Salesforce_Utilities:
                     with open(fallout_file, mode = "w", newline = "\n") as file:
                         # write the dataframe to the file using a commma as the delimeter
                         fallout_df.to_csv(file, sep = ",", index = False)
+                # log to console, upload complete
+                log.info("[Record upload complete]")
                 # return both the passing and fallout dataframes
                 return (passing_df, fallout_df)
             # no records are in the dataframe, nothing to process
@@ -504,6 +506,11 @@ class MSSQL_Utilities:
         """
         # try except block
         try:
+            # check if the dataframe being uploaded is empty / populated
+            if df.empty:
+                log.info(f"[Dataframe empty, nothing to upload.]")
+                # exit function if df is empty
+                return None
             # if the df column list matches the table, use all columns
             if use_all_columns_in_df:
                 # generate a list of all columns
@@ -2101,7 +2108,7 @@ class Custom_Utilities:
         Description: return the current time down to the second, generally for creating timestamps of actions
         Parameters:
 
-        ts_format - default to "%Y-%m-%d__%H-%M-%S" - this is the default of salesforce
+        ts_format   - default to "%Y-%m-%d__%H-%M-%S" - this is the default of salesforce
 
         Return:     - datetime of right now down to the second.
         """
@@ -2113,6 +2120,67 @@ class Custom_Utilities:
         except Exception as e:
             # log error when returning a datetime string of now
             log.exception(f"[Error returning a datetime string of now...{e}]")
+
+    def print_df_info(self, df, head = True, columns = True, data_types = True, head_num_rows = 5):
+         """
+         Description: log any text message to console, use for start and end timer of scripts
+         Parameters:
+
+         df             - Pandas DataFrame
+         head           - Boolean, print first few rows, default = True
+         columns        - Boolean, print names of columns, default = True,
+         data_types     - Boolean, print data types of columns in dataframe, default = True
+         head_num_rows  - int, how many rows of data to print to console, default = 5
+
+         Return:        - None
+         """
+         # try except block
+         try:
+            if head:
+                 log.info("[Printing head of DataFrame:]")
+                 print(df.head(head_num_rows))
+            if columns:
+                log.info("[Printing columns of DataFrame:]")
+                print(df.columns)
+            if data_types:
+                log.info("[Printing column datatypes of DataFrame:]")
+                print(df.dtypes)
+         # exception block - error returning a datetime string of now
+         except Exception as e:
+             # log error when returning a datetime string of now
+             log.exception(f"[Error printing dataframe info...{e}]")
+
+    def get_dtypes_as_list(self, df, custom_mapping = None):
+        """
+        Description: log any text message to console, use for start and end timer of scripts
+        Parameters:
+
+        df             - Pandas DataFrame
+        custom_mapping - dict, string:string mappings
+
+        Return:        - list of strings
+        """
+        # try except block
+        try:
+            # create default mapping of pandas datatypes to basics python datatypes
+            mapping = {"float64" : "str",
+                       "int64" : "int",
+                       "object" : "str",
+                       "category" : "str",
+                       "bool" : "str",
+                       "string" : "str"}
+            # if using a custom mapping, override the default mapping
+            if custom_mapping:
+                # override mapping
+                mapping = custom_mapping
+                # create dtypes list then convert the values with list comprehension
+            dtypes_list = [mapping[str(x)] for x in df.dtypes.to_list()]
+            # return list of dtypes
+            return dtypes_list
+        # exception block - error returning a datetime string of now
+        except Exception as e:
+            # log error when returning a datetime string of now
+            log.exception(f"[Error printing dataframe info...{e}]")
 
     def log_message_to_console(self, message="%Y-%m-%d__%H-%M-%S"):
         """
