@@ -101,6 +101,25 @@ if len(sf_accounts_df) != 0:
     both_df, sf_accounts_only_df, accounts_to_insert_df = Utils.get_df_diffs(sf_accounts_df, stg_account_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # drop id columns and _merge column
     accounts_to_insert_df.drop(['Id', 'Account_Number_External_ID__c', '_merge'], axis = 1, inplace = True)
+
+    # remove _merge columns
+    both_df.drop(['_merge'], axis = 1, inplace = True)
+    sf_accounts_only_df.drop(['_merge'], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    both_dtypes = Utils.get_dtypes_as_list(both_df)
+    sf_only_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
+
+    # mssql table name the dataframe is being inserted into
+    both_table = "[dbo].[Account_101_Account_In_Both_Systems]"
+
+    # mssql table name the dataframe is being inserted into
+    sf_only_table = "[dbo].[Account_101_sf_accounts_only]"
+
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, both_table, both_df, both_dtypes, drop_table = True)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_only_table, sf_accounts_only_df, sf_only_dtypes, drop_table = True)
 else:
     # if there are no existing accounts in Salesforce, insert all staging accounts
     accounts_to_insert_df = stg_account_df
@@ -131,15 +150,15 @@ passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to
 
 # mssql table name the dataframe is being inserted into
 success_table_name = "[dbo].[Account_101_Success]"
-
 # mssql table name the dataframe is being inserted into
 fallout_table_name = "[dbo].[Account_101_Fallout]"
 
-# Load passing/fallout records into respective tables in database
-# hardcoding these types instead of the entire dataframe
-column_types = ('str', 'str', 'str', 'int', 'str', 'int', 'int', 'str', 'int', 'str', 'str', 'str', 'str', 'str')
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
 
 # upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, column_types, drop_table = True)
+MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 # upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, column_types, drop_table = True)
+MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
