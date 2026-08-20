@@ -12,7 +12,7 @@ Description: Log into mssql server, query account staging table records.
 import numpy as np
 import pandas as pd
 import os
-from custom_db_utilities import  MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
+from custom_db_utilities import MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
