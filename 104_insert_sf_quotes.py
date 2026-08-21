@@ -86,11 +86,29 @@ sf_accounts_df = Utils.encode_df(sf_accounts_df)
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_accounts_df) != 0:
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
-    contracts_with_accounts_df, sf_only_accounts, mssql_contracts_only_df = Utils.get_df_diffs(sf_accounts_df, stg_contract_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    contracts_with_accounts_df, sf_accounts_only_df, mssql_contracts_only_df = Utils.get_df_diffs(sf_accounts_df, stg_contract_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contracts_with_accounts_df.drop(["account_number_external_id",  "Account_Number_External_ID__c", "_merge"], axis = 1, inplace = True)
     # rename column from Id to SBQQ__Account__c
     contracts_with_accounts_df.rename(columns = {"Id" : "SBQQ__Account__c"}, inplace = True)
+
+    # remove _merge columns for reporting
+    sf_accounts_only_df.drop(['_merge'], axis = 1, inplace = True)
+    mssql_contracts_only_df.drop(['_merge'], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    sf_accounts_only_df_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
+    mssql_contracts_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contracts_only_df)
+
+    # mssql table name the dataframe is being inserted into
+    sf_accounts_only_df_table = "[dbo].[trgt_104_SBQQ__Quote__c_sf_accounts_only]"
+    # mssql table name the dataframe is being inserted into
+    mssql_contracts_only_df_table = "[dbo].[trgt_104_SBQQ__Quote__c_no_migrated_account]"
+
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_accounts_only_df_table, sf_accounts_only_df, sf_accounts_only_df_dtypes, drop_table = True)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, mssql_contracts_only_df_table, mssql_contracts_only_df, mssql_contracts_only_df_dtypes, drop_table = True)
 
 # query Standard Pricebook from salesforce
 # query string to select records from salesforce
@@ -127,6 +145,24 @@ if len(sf_opportunity_df) != 0:
     quotes_with_opps_df.rename(columns = {"Id" : "SBQQ__Opportunity2__c"}, inplace = True)
     # remove extra columns
     quotes_with_opps_df.drop(["_merge", "Opportunity_External_ID__c"], axis = 1, inplace = True)
+
+    # remove _merge columns for reporting
+    sf_opportunity_only_df.drop(['_merge'], axis = 1, inplace = True)
+    quote_without_opps_df.drop(['_merge'], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    sf_opportunity_only_df_dtypes = Utils.get_dtypes_as_list(sf_opportunity_only_df)
+    quote_without_opps_df_dtypes = Utils.get_dtypes_as_list(quote_without_opps_df)
+
+    # mssql table name the dataframe is being inserted into
+    sf_opportunity_only_df_table = "[dbo].[trgt_104_SBQQ__Quote__c_opp_no_related_quote]"
+    # mssql table name the dataframe is being inserted into
+    quote_without_opps_df_table = "[dbo].trgt_104_[SBQQ__Quote__c_no_opp_found]"
+
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_opportunity_only_df_table, sf_opportunity_only_df, sf_opportunity_only_df_dtypes, drop_table = True)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, quote_without_opps_df_table, quote_without_opps_df, quote_without_opps_df_dtypes, drop_table = True)
 
 # query existing Contacts from salesforce
 # query string to select records from salesforce
@@ -172,4 +208,19 @@ quote_to_insert_df['SBQQ__Status__c'] = 'Draft'
 
 # insert net new records into salesforce Quote object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, quote_to_insert_df, object, 'insert', success_file, fallout_file)
+passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, quote_to_insert_df, object, 'insert', success_file, fallout_file)
+
+# mssql table name the dataframe is being inserted into
+success_table_name = "[dbo].[trgt_104_SBQQ__Quote__c_insert_Success]"
+# mssql table name the dataframe is being inserted into
+fallout_table_name = "[dbo].[trgt_104_SBQQ__Quote__c_insert_Fallout]"
+
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)

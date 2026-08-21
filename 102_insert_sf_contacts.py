@@ -178,9 +178,9 @@ contacts_to_insert_df['Migrated_Record__c'] = True
 passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, contacts_to_insert_df, object, 'insert', success_file, fallout_file)
 
 # mssql table name the dataframe is being inserted into
-success_table_name = "[dbo].[Contact_102_Success]"
+success_table_name = "[dbo].[trgt_102_Contact_insert_Success]"
 # mssql table name the dataframe is being inserted into
-fallout_table_name = "[dbo].[Contact_102_Fallout]"
+fallout_table_name = "[dbo].[trgt_102_Contact_insert_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.

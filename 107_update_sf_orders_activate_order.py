@@ -71,4 +71,22 @@ sf_orders_df['Status'] = 'Activated'
 
 # update records in salesforce Quote object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, object, 'update', success_file, fallout_file)
+passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, object, 'update', success_file, fallout_file)
+
+# initiate an MS SQL cursor to query with
+connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
+
+# mssql table name the dataframe is being updated into
+success_table_name = "[dbo].[trgt_107_SBQQ__Order__c_update_Success]"
+# mssql table name the dataframe is being updated into
+fallout_table_name = "[dbo].[trgt_107_SBQQ__Order__c_update_Fallout]"
+
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)

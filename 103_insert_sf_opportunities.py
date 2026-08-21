@@ -98,9 +98,9 @@ if len(sf_accounts_df) != 0:
     mssql_contracts_no_account_df_dtypes = Utils.get_dtypes_as_list(mssql_contracts_no_account_df)
 
     # mssql table name the dataframe is being inserted into
-    sf_accounts_only_df_table = "[dbo].[Opportunity_103_sf_accounts_only]"
+    sf_accounts_only_df_table = "[dbo].[trgt_103_Opportunity_sf_accounts_only]"
     # mssql table name the dataframe is being inserted into
-    mssql_contracts_no_account_df_table = "[dbo].[Opportunity_103_no_account_in_target]"
+    mssql_contracts_no_account_df_table = "[dbo].[trgt_103_Opportunity_no_account_in_target]"
 
     # upload fallout records to reporting table
     MSSQL_Utils.upload_reports(connection, cursor, sf_accounts_only_df_table, sf_accounts_only_df, sf_accounts_only_df_dtypes, drop_table = True)
@@ -150,9 +150,9 @@ if len(sf_opportunity_df) != 0:
     sf_opportunity_only_df_dtypes = Utils.get_dtypes_as_list(sf_opportunity_only_df)
 
     # mssql table name the dataframe is being inserted into
-    both_df_table = "[dbo].[Opportunity_103_opp_already_loaded]"
+    both_df_table = "[dbo].[trgt_103_Opportunity_opp_already_loaded]"
     # mssql table name the dataframe is being inserted into
-    sf_opportunity_only_df_table = "[dbo].[Opportunity_103_opp_only_in_sf]"
+    sf_opportunity_only_df_table = "[dbo].[trgt_103_Opportunity_opp_only_in_sf]"
 
     # upload fallout records to reporting table
     MSSQL_Utils.upload_reports(connection, cursor, both_df_table, both_df, both_df_dtypes, drop_table = True)
@@ -183,9 +183,9 @@ opportunity_to_insert_df['Migrated_Record__c'] = True
 passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, opportunity_to_insert_df, object, 'insert', success_file, fallout_file)
 
 # mssql table name the dataframe is being inserted into
-success_table_name = "[dbo].[Opportunity_103_Success]"
+success_table_name = "[dbo].[trgt_103_Opportunity_insert_Success]"
 # mssql table name the dataframe is being inserted into
-fallout_table_name = "[dbo].[Opportunity_103_Fallout]"
+fallout_table_name = "[dbo].[trgt_103_Opportunity_insert_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.

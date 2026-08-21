@@ -58,6 +58,9 @@ select_query = """SELECT scl.[contract_line_number]
 # accounts in the mssql table shown in the query above
 stg_contract_line_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 
+stg_contract_line_df = SF_Utils.format_date_to_salesforce_date(stg_contract_line_df, "start_date")
+stg_contract_line_df = SF_Utils.format_date_to_salesforce_date(stg_contract_line_df, "end_date")
+
 # get credentials for salesforce login
 # declare which environment this script will perform operations against,
 # can have multiple environments in the same script at the same time
@@ -90,11 +93,29 @@ sf_quotes_df = Utils.encode_df(sf_quotes_df)
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_quotes_df) != 0:
     # merge the csv data with the salesforce data to match SF Ids to the CSV quotes
-    contract_lines_with_quotes_df, sf_only_quotes_df, mssql_contract_lines_only_df = Utils.get_df_diffs(sf_quotes_df, stg_contract_line_df, left_on = ['Quote_External_ID__c'], right_on = ['contract_number'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    contract_lines_with_quotes_df, sf_quotes_only_df, mssql_contract_lines_only_df = Utils.get_df_diffs(sf_quotes_df, stg_contract_line_df, left_on = ['Quote_External_ID__c'], right_on = ['contract_number'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contract_lines_with_quotes_df.drop(["Quote_External_ID__c", "_merge"], axis = 1, inplace = True)
     # rename Id column from merge to SBQQ__Quote__c
     contract_lines_with_quotes_df.rename(columns = {"Id" : "SBQQ__Quote__c"}, inplace = True)
+
+    # remove _merge columns for reporting
+    sf_quotes_only_df.drop(['_merge'], axis = 1, inplace = True)
+    mssql_contract_lines_only_df.drop(['_merge'], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    sf_quotes_only_df_dtypes = Utils.get_dtypes_as_list(sf_quotes_only_df)
+    mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
+
+    # mssql table name the dataframe is being inserted into
+    sf_quotes_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_sf_only_quote]"
+    # mssql table name the dataframe is being inserted into
+    mssql_contract_lines_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_stg_only_contract_line]"
+
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_quotes_only_df_table, sf_quotes_only_df, sf_quotes_only_df_dtypes, drop_table = True)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
 
 # Query SF Products - map product to sf product
 # product mapping from source product name to salesforce product name
@@ -140,6 +161,24 @@ if len(sf_products_df) != 0:
     # rename product Id to SBQQ__Product__c
     contract_lines_with_products_df.rename(columns = {"Id" : "SBQQ__Product__c"}, inplace = True)
 
+    # remove _merge columns for reporting
+    sf_only_products_df.drop(['_merge'], axis = 1, inplace = True)
+    mssql_contract_lines_only_df.drop(['_merge'], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    sf_only_products_df_dtypes = Utils.get_dtypes_as_list(sf_only_products_df)
+    mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
+
+    # mssql table name the dataframe is being inserted into
+    sf_only_products_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_sf_only_products]"
+    # mssql table name the dataframe is being inserted into
+    mssql_contract_lines_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_contract_line_no_sf_product]"
+
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_only_products_df_table, sf_only_products_df, sf_only_products_df_dtypes, drop_table = True)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
+
 # Query Pricebook entries to get list unit price for mapped Products
 # query existing Pricebook entries from salesforce
 # query string to select records from salesforce
@@ -155,11 +194,29 @@ sf_pricebookentry_df = Utils.encode_df(sf_pricebookentry_df)
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_pricebookentry_df) != 0:
     # merge the csv data with the salesforce data to match SF Ids to the CSV pricebookentry
-    contract_lines_with_pricebookentry_df, sf_only_pricebookentry_df, mssql_contract_lines_only_df = Utils.get_df_diffs(sf_pricebookentry_df, contract_lines_with_products_df, left_on = ['Product2Id'], right_on = ['SBQQ__Product__c'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    contract_lines_with_pricebookentry_df, sf_pricebookentry_only_df, mssql_contract_lines_only_df = Utils.get_df_diffs(sf_pricebookentry_df, contract_lines_with_products_df, left_on = ['Product2Id'], right_on = ['SBQQ__Product__c'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contract_lines_with_pricebookentry_df.drop(["Product2Id", "_merge"], axis = 1, inplace = True)
     # rename pricebookentry Id and unit price
     contract_lines_with_pricebookentry_df.rename(columns = {"Id" : "SBQQ__PricebookEntryId__c", "UnitPrice" : "SBQQ__ListPrice__c"}, inplace = True)
+
+    # remove _merge columns for reporting
+    sf_pricebookentry_only_df.drop(['_merge'], axis = 1, inplace = True)
+    mssql_contract_lines_only_df.drop(['_merge'], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    sf_pricebookentry_only_df_dtypes = Utils.get_dtypes_as_list(sf_pricebookentry_only_df)
+    mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
+
+    # mssql table name the dataframe is being inserted into
+    sf_pricebookentry_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_pricebook_missing_product]"
+    # mssql table name the dataframe is being inserted into
+    mssql_contract_lines_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_stg_contract_line_no_pricebook]"
+
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_pricebookentry_only_df_table, sf_pricebookentry_only_df, sf_pricebookentry_only_df_dtypes, drop_table = True)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
 
 
 
@@ -176,8 +233,8 @@ contract_lines_with_pricebookentry_df.rename(columns = {"quantity" : "SBQQ__Quan
                                                         "end_date" : "SBQQ__EndDate__c"}, inplace = True)
 
 # format start and end date of quote lines
-contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__StartDate__c")
-contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__EndDate__c")
+#contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__StartDate__c")
+#contract_lines_with_pricebookentry_df = SF_Utils.format_date_to_salesforce_date(contract_lines_with_pricebookentry_df, "SBQQ__EndDate__c")
 
 # set pricing method to list
 contract_lines_with_pricebookentry_df["SBQQ__PricingMethod__c"] = "List"
@@ -192,4 +249,19 @@ contract_lines_with_pricebookentry_df['SBQQ__UnitCost__c'] = contract_lines_with
 
 # insert net new records into salesforce QuoteLine object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, contract_lines_with_pricebookentry_df, object, 'insert', success_file, fallout_file)
+passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, contract_lines_with_pricebookentry_df, object, 'insert', success_file, fallout_file)
+
+# mssql table name the dataframe is being inserted into
+success_table_name = "[dbo].[trgt_105_SBQQ__QuoteLine__c_insert_Success]"
+# mssql table name the dataframe is being inserted into
+fallout_table_name = "[dbo].[trgt_105_SBQQ__QuoteLine__c_insert_Fallout]"
+
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
