@@ -77,7 +77,11 @@
   6. 202_delete_sf_contacts.py
   7. 201_delete_sf_accounts.py
 ### Output and Reporting
-  - Each folder holds success and fallout files for the stated DML operations
+  - Each output is logged to staging DB tables generated in the execution script.
+    - Insert/update scripts start with "trgt_###_<Object_Name>..."
+    - Delete scripts start with "trgt_del_###_<Object_Name>..."
+  - Additionally there are csv backups generated as well in case of an issue.
+  - Each folder below holds success and fallout files for the stated DML operations
     - DELETE/
     - INESRT/
     - UPDATE/
