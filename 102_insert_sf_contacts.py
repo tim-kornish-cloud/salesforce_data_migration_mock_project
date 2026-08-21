@@ -90,9 +90,28 @@ sf_accounts_df = Utils.encode_df(sf_accounts_df)
 # cannot merge a df with empty df, check if any salesforce migrated records exist
 if len(sf_accounts_df) != 0:
     # merge the csv data with the salesforce data to match SF Ids to the CSV accounts
-    contacts_with_accounts_df, sf_only_accounts, mssql_contacts_only_df = Utils.get_df_diffs(sf_accounts_df, stg_contact_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
+    contacts_with_accounts_df, sf_accounts_only_df, mssql_contacts_only_df = Utils.get_df_diffs(sf_accounts_df, stg_contact_df, left_on = ['Account_Number_External_ID__c'], right_on = ['account_number_external_id'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # remove unneccessary column for insert
     contacts_with_accounts_df.drop(["account_number_external_id",  "Account_Number_External_ID__c", "_merge"], axis = 1, inplace = True)
+
+    # remove _merge columns
+    sf_accounts_only_df.drop(["_merge"], axis = 1, inplace = True)
+    mssql_contacts_only_df.drop(["_merge"], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    sf_only_accounts_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
+    mssql_contacts_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contacts_only_df)
+
+    # mssql table name the dataframe is being inserted into
+    sf_only_accounts_table = "[dbo].[Account_102_sf_accounts_only]"
+
+    # mssql table name the dataframe is being inserted into
+    mssql_contacts_only_df_table = "[dbo].[Account_102_mssql_contacts_only]"
+
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_only_accounts_table, sf_accounts_only_df, sf_only_accounts_dtypes, drop_table = True)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, mssql_contacts_only_df_table, mssql_contacts_only_df, mssql_contacts_only_df_dtypes, drop_table = True)
 
 # query existing Contacts from salesforce
 # query string to select records from salesforce
@@ -112,6 +131,26 @@ if len(sf_contacts_df) != 0:
     both_df, sf_contacts_only_df, contacts_to_insert_df = Utils.get_df_diffs(sf_contacts_df, contacts_with_accounts_df, left_on = ['FirstName', 'LastName'], right_on = ['first_name', 'last_name'], how = 'outer', suffixes = ('_SF', '_STG'), indicator = True)
     # drop id columns and _merge column
     contacts_to_insert_df.drop(['Id_SF', 'Id_STG', '_merge'], axis = 1, inplace = True)
+
+    # remove _merge columns
+    sf_contacts_only_df.drop(["_merge"], axis = 1, inplace = True)
+    both_df.drop(["_merge"], axis = 1, inplace = True)
+
+    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+    sf_contacts_only_dtypes = Utils.get_dtypes_as_list(sf_contacts_only_df)
+    both_df_dtypes = Utils.get_dtypes_as_list(both_df)
+
+    # mssql table name the dataframe is being inserted into
+    sf_contacts_only_table = "[dbo].[Account_102_sf_contacts_only]"
+
+    # mssql table name the dataframe is being inserted into
+    both_df_table = "[dbo].[Account_102_contact_exists_in_sf]"
+
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, sf_contacts_only_table, sf_contacts_only_df, sf_contacts_only_dtypes, drop_table = True)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, both_df_table, both_df, both_df_dtypes, drop_table = True)
+
 else:
     # if there are no matching contacts in SF, copy and load the entire staging table dataframe with related account Ids
     contacts_to_insert_df = contacts_with_accounts_df
@@ -136,4 +175,19 @@ contacts_to_insert_df['Migrated_Record__c'] = True
 
 # insert net new records into salesforce Contact object
 # upload the records to salesforce
-SF_Utils.upload_dataframe_to_salesforce(sf, contacts_to_insert_df, object, 'insert', success_file, fallout_file)
+passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, contacts_to_insert_df, object, 'insert', success_file, fallout_file)
+
+# mssql table name the dataframe is being inserted into
+success_table_name = "[dbo].[Account_102_Success]"
+# mssql table name the dataframe is being inserted into
+fallout_table_name = "[dbo].[Account_102_Fallout]"
+
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
