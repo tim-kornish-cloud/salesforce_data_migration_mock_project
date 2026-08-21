@@ -6,7 +6,8 @@ Description: log into salesforce, query existing Record jobs used to upload reco
 
 """
 
-# The commented below doesn't actually purge the apex jobs, to target apex async jobs, run the debugger in anonymous apex window:
+# to target apex async jobs, run the debugger in anonymous apex window:
+
 // Target jobs finished before 30 days ago
 Date targetDate = Date.today().addDays(-30);
 
@@ -14,6 +15,8 @@ Date targetDate = Date.today().addDays(-30);
 Integer deletedCount = System.purgeOldAsyncJobs(targetDate, 5000);
 
 System.debug('Deleted old async jobs count: ' + deletedCount);
+
+# The commented below doesn't actually purge the apex jobs as intended, do not use
 
 # import numpy as np
 # import pandas as pd
