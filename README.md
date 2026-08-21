@@ -18,6 +18,7 @@
 * [Set up Salesforce Environment with Salesforce CPQ](#Set-up-Salesforce-Environment-with-Salesforce-CPQ)
 * [Add custom fields to objects in Salesforce to track migrated records](#Add-custom-fields-to-objects-in-Salesforce-to-track-migrated-records)
 * [Credentials](#Credentials)
+* [Purge Apex Record Jobs](#Purge-Apex-Record-Jobs)
 
 ## File Structure
 ### Source Data And Source Data Setup
@@ -134,3 +135,17 @@
 ## Credentials
 - The credentials to log into the source MySQL DB, Staging MSSQL DB and Salesforce are all stored in a file kept secret by the .gitignore
 - I create a credentials.py and credentials.properties which store the values and pull them into respective migration scripts.
+
+## Purge Apex Record Jobs
+1. Login to Salesforce
+2. Click Username dropdown, select Developer console
+3. Copy and paste the following code and execute:
+```Java
+// Target jobs finished before 30 days ago
+Date targetDate = Date.today().addDays(-30);
+
+// Purge a maximum of 5,000 old async jobs
+Integer deletedCount = System.purgeOldAsyncJobs(targetDate, 5000);
+
+System.debug('Deleted old async jobs count: ' + deletedCount);
+```
