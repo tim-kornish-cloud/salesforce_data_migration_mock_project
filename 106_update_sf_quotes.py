@@ -128,9 +128,9 @@ passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_quote_li
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # mssql table name the dataframe is being inserted into
-success_table_name = "[dbo].[SBQQ__Quote__c_106_ql_update_Success]"
+success_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_ql_update_Success]"
 # mssql table name the dataframe is being inserted into
-fallout_table_name = "[dbo].[SBQQ__Quote__c_106_ql_update_Fallout]"
+fallout_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_ql_update_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.
@@ -171,9 +171,9 @@ passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_quotes_d
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # mssql table name the dataframe is being inserted into
-success_table_name = "[dbo].[SBQQ__Quote__c_106_Ordered_Success]"
+success_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_Ordered_Success]"
 # mssql table name the dataframe is being inserted into
-fallout_table_name = "[dbo].[SBQQ__Quote__c_106_Ordered_Fallout]"
+fallout_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_Ordered_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.

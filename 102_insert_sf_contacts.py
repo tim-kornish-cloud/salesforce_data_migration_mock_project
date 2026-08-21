@@ -103,10 +103,10 @@ if len(sf_accounts_df) != 0:
     mssql_contacts_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contacts_only_df)
 
     # mssql table name the dataframe is being inserted into
-    sf_only_accounts_table = "[dbo].[Contact_102_sf_accounts_only]"
+    sf_only_accounts_table = "[dbo].[trgt_102_Contact_sf_accounts_only]"
 
     # mssql table name the dataframe is being inserted into
-    mssql_contacts_only_df_table = "[dbo].[Contact_102_mssql_contacts_only]"
+    mssql_contacts_only_df_table = "[dbo].[trgt_102_Contact_mssql_contacts_only]"
 
     # upload success records to reporting table
     MSSQL_Utils.upload_reports(connection, cursor, sf_only_accounts_table, sf_accounts_only_df, sf_only_accounts_dtypes, drop_table = True)
@@ -141,10 +141,10 @@ if len(sf_contacts_df) != 0:
     both_df_dtypes = Utils.get_dtypes_as_list(both_df)
 
     # mssql table name the dataframe is being inserted into
-    sf_contacts_only_table = "[dbo].[Contact_102_sf_contacts_only]"
+    sf_contacts_only_table = "[dbo].[trgt_102_Contact_sf_contacts_only]"
 
     # mssql table name the dataframe is being inserted into
-    both_df_table = "[dbo].[Contact_102_contact_exists_in_sf]"
+    both_df_table = "[dbo].[trgt_102_Contact_duplicate_contact_exists_in_sf]"
 
     # upload success records to reporting table
     MSSQL_Utils.upload_reports(connection, cursor, sf_contacts_only_table, sf_contacts_only_df, sf_contacts_only_dtypes, drop_table = True)
