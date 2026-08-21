@@ -714,7 +714,6 @@ class MSSQL_Utilities:
             # create SQL string to create new table
             sql_string = self.generate_sql_create_table_string_from_df(df, table_name, drop_table, varchar_size) # drop_table doesn't make sense here since only can apply if table does not exist, but then can't drop what does not exist.
 
-            print(sql_string)
             # execute SQL to generate new reporting table
             self.execute_sql(connection, cursor, sql_string)
 
