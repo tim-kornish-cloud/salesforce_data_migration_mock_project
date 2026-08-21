@@ -139,7 +139,8 @@
 ## Purge Apex Record Jobs
 1. Login to Salesforce
 2. Click Username dropdown, select Developer console
-3. Copy and paste the following code and execute:
+3. Click 'Debug' dropdown, select Open Execute Anonymous Window
+4. Copy and paste the following code into the developer console and execute:
 ```Java
 // Target jobs finished before 30 days ago
 Date targetDate = Date.today().addDays(-30);
