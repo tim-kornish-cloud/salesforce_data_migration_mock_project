@@ -13,9 +13,11 @@ Description: log into salesforce, query existing OrderItem WHERE SBQQ__QuoteLine
 import numpy as np
 import pandas as pd
 import os
-from custom_db_utilities import Salesforce_Utilities, Custom_Utilities
+from custom_db_utilities import MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
 
+# create and instance of the custom salesforce utilities class used to interact with Salesforce
+MSSQL_Utils = MSSQL_Utilities()
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 SF_Utils = Salesforce_Utilities()
 # create and instance of the custom  utilities class
@@ -117,10 +119,43 @@ sf_order_items_df = sf_order_items_df[['Id']]
 
 # delete migrated salesforce order_item records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'delete', success_file_4, fallout_file_4)
+order_item_passing_df, order_item_fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'delete', success_file_4, fallout_file_4)
+
+# initiate an MS SQL cursor to query with
+connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
+
+# mssql table name the dataframe is being inserted into
+order_item_success_table_name = "[dbo].[OrderItem_207_Success]"
+# mssql table name the dataframe is being inserted into
+order_item_fallout_table_name = "[dbo].[OrderItem_207_Fallout]"
+
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+order_item_passing_dtypes = Utils.get_dtypes_as_list(order_item_passing_df)
+order_item_fallout_dtypes = Utils.get_dtypes_as_list(order_item_fallout_df)
+
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, order_item_success_table_name, order_item_passing_df, order_item_passing_dtypes, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, order_item_fallout_table_name, order_item_fallout_df, order_item_fallout_dtypes, drop_table = True)
 
 # When deleting only sumbit Id column
 sf_orders_df = sf_orders_df[['Id']]
 
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'delete', success_file_5, fallout_file_5)
+order_passing_df, order_fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'delete', success_file_5, fallout_file_5)
+
+# mssql table name the dataframe is being inserted into
+order_success_table_name = "[dbo].[Order_207_Success]"
+# mssql table name the dataframe is being inserted into
+order_fallout_table_name = "[dbo].[Order_207_Fallout]"
+
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+order_passing_dtypes = Utils.get_dtypes_as_list(order_passing_df)
+order_fallout_dtypes = Utils.get_dtypes_as_list(order_fallout_df)
+
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, order_success_table_name, order_passing_df, order_passing_dtypes, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, order_fallout_table_name, order_fallout_df, order_fallout_dtypes, drop_table = True)

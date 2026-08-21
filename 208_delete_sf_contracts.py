@@ -10,9 +10,11 @@ Description: log into salesforce, query existing Contracts where SBQQ_Quote__r.M
 import numpy as np
 import pandas as pd
 import os
-from custom_db_utilities import Salesforce_Utilities, Custom_Utilities
+from custom_db_utilities import MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
 
+# create and instance of the custom salesforce utilities class used to interact with Salesforce
+MSSQL_Utils = MSSQL_Utilities()
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 SF_Utils = Salesforce_Utilities()
 # create and instance of the custom  utilities class
@@ -75,4 +77,22 @@ sf_contracts_df.drop(['Status'], axis = 1, inplace = True)
 
 # delete migrated salesforce contract records
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_contracts_df, 'Contract', 'delete', success_file_2, fallout_file_2)
+passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_contracts_df, 'Contract', 'delete', success_file_2, fallout_file_2)
+
+# initiate an MS SQL cursor to query with
+connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
+
+# mssql table name the dataframe is being inserted into
+success_table_name = "[dbo].[Contract_208_Success]"
+# mssql table name the dataframe is being inserted into
+fallout_table_name = "[dbo].[Contract_208_Fallout]"
+
+# generate column types from passing and fallout dataframes,
+# should always be the same so redundant to run for each.
+passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+
+# upload success records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
+# upload fallout records to reporting table
+MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
