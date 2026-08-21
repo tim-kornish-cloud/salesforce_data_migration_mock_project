@@ -83,9 +83,9 @@ passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_contract
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # mssql table name the dataframe is being inserted into
-success_table_name = "[dbo].[Contract_208_Success]"
+success_table_name = "[dbo].[trgt_del_208_Contract_Success]"
 # mssql table name the dataframe is being inserted into
-fallout_table_name = "[dbo].[Contract_208_Fallout]"
+fallout_table_name = "[dbo].[trgt_del_208_Contract_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.

@@ -125,9 +125,9 @@ order_item_passing_df, order_item_fallout_df = SF_Utils.upload_dataframe_to_sale
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # mssql table name the dataframe is being inserted into
-order_item_success_table_name = "[dbo].[OrderItem_207_Success]"
+order_item_success_table_name = "[dbo].[trgt_del_207_OrderItem_Success]"
 # mssql table name the dataframe is being inserted into
-order_item_fallout_table_name = "[dbo].[OrderItem_207_Fallout]"
+order_item_fallout_table_name = "[dbo].[trgt_del_207_OrderItem_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.
@@ -146,9 +146,9 @@ sf_orders_df = sf_orders_df[['Id']]
 order_passing_df, order_fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'delete', success_file_5, fallout_file_5)
 
 # mssql table name the dataframe is being inserted into
-order_success_table_name = "[dbo].[Order_207_Success]"
+order_success_table_name = "[dbo].[trgt_del_207_Order_Success]"
 # mssql table name the dataframe is being inserted into
-order_fallout_table_name = "[dbo].[Order_207_Fallout]"
+order_fallout_table_name = "[dbo].[trgt_del_207_Order_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.

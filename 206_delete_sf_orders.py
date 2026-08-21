@@ -69,9 +69,9 @@ passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_d
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # mssql table name the dataframe is being inserted into
-success_table_name = "[dbo].[Order_206_Success]"
+success_table_name = "[dbo].[trgt_del_206_Order_Success]"
 # mssql table name the dataframe is being inserted into
-fallout_table_name = "[dbo].[Order_206_Fallout]"
+fallout_table_name = "[dbo].[trgt_del_206_Order_Fallout]"
 
 # generate column types from passing and fallout dataframes,
 # should always be the same so redundant to run for each.
