@@ -1,4 +1,6 @@
 # Salesforce Data Migration using fake data from Mocharoo.com
+This repository documents a migration process moving source data from an MySQL database to an intermediary MSSQL database for staging source data. From the staging database, records are then transformed to fit Salesforce object format and migrated in sequence to create Accounts, Contacts, Opportunities, Quotes, Quote Lines, Orders, Order Lines, Contracts, and Subscriptions with the purpose to be able to amend and renew the final Contracts and Subscriptions.
+
 
 ## Table of Contents
 * [File Structure](#File-Structure)
