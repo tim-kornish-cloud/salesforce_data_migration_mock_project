@@ -15,6 +15,7 @@ from collections import OrderedDict
 import time
 import logging as log
 import coloredlogs
+import json
 # pandas and numpy
 import numpy as np
 import pandas as pd
@@ -396,6 +397,39 @@ class Salesforce_Utilities:
         except Exception as e:
             # log error when uploading dataframe of records to salesforce
             log.exception(f"[Error uploading dataframe of records to salesforce...{e}]")
+
+    def retrieve_object_metadata(self, sf, object, field_metadata_to_keep = None):
+        """
+        Description: Retreieve metadata for an object within salesforce.
+                     Retreieves all field metadata of specified object
+        Parameters:
+
+        sf                      - sf instance, logged in salesforce instance
+        object                  - string, Salesforce object name to retrieve field metadata for
+        field_metadata_to_keep  - list, list of field metadata values to retain and return back, if none, return all.
+                                  I know using "None" is grammatically counter intuitive but just roll with it.
+
+        Return:                 - pd.DataFrame, return json converted as pandas dataframe
+        """
+        # try except block
+        try:
+            # log status to console
+            log.info(f"[retrieving metadata for object : {object}]")
+            # make soap api call to pull object metadata
+            desc = getattr(sf, object).describe()
+            # convert metadata to json and load as Ordered Dict, retain only fields metadata
+            fields_dict = json.loads(json.dumps(desc['fields']))
+            # convert Ordered Dict to pandas dataframe
+            fields_df = pd.DataFrame(fields_dict)
+            # chekc if returning all fields or only a subset
+            if field_metadata_to_keep == None:
+                return fields_df
+            return fields_df[field_metadata_to_keep]
+
+        # exception block - error logging into salesforce
+        except Exception as e:
+            # log error when logging into salesforce
+            log.exception(f"[Error retrieving metadata for object : {object}...{e}]")
 
 class MSSQL_Utilities:
     def __init__(self):
@@ -1946,7 +1980,8 @@ class Custom_Utilities:
             # log finished looping and now writing file out
             log.info("[saving file to output location]")
             # save the file
-            writer.save()
+            writer.close()
+
         # exception block - error writing list of dataframe to excel sheets
         except Exception as e:
             # log error when writing list of dataframe to excel sheets
@@ -2199,3 +2234,47 @@ class Custom_Utilities:
         except Exception as e:
             # log error when returning a datetime string of now
             log.exception(f"[Error logging message...{e}]")
+
+    def add_mapping_fields(self, df, mapping_fields_to_add, add_fields_on_left = True):
+        """
+        Description: add fields to a dataframe to generate a mapping document
+        Parameters:
+
+        df                      - DataFrame, original df to add new mapping fields with blank columns to
+        mapping_fields_to_add   - list, list of fields to add
+        add_fields_on_left      - boolean, default = true, add fields on right if false
+
+        return df
+        """
+        # try except block
+        try:
+            # log message to console
+            log.info(f"[Adding Mapping fields to dataframe]")
+            # check to make sure list is not empty
+            if not mapping_fields_to_add:
+                # if no new fields to add, just return the orignial dataframe, raising an error would also suffice, but not needed now
+                return df
+            # retain order of original fields:
+            original_fields = df.columns.tolist()
+            # loop through list of fields to add
+            for field in mapping_fields_to_add:
+                # make column complete blank
+                df[field] = None
+            # create fields list to order dataframe columns
+            fields = []
+            # check if to add blank fields on left
+            if add_fields_on_left:
+                # create field order list
+                fields = mapping_fields_to_add + original_fields
+            # add fields on right of original fields
+            else:
+                # create field order list
+                fields = original_fields + mapping_fields_to_add
+            # reorder fields in dataframe before returning
+            df = df[fields]
+            # return dataframe
+            return df
+        # exception block - error returning a datetime string of now
+        except Exception as e:
+            # log error when returning a datetime string of now
+            log.exception(f"[Error adding new fields to dataframe...{e}]")
