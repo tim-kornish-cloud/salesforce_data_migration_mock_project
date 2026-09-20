@@ -163,3 +163,5 @@ Integer deletedCount = System.purgeOldAsyncJobs(targetDate, 5000);
 
 System.debug('Deleted old async jobs count: ' + deletedCount);
 ```
+
+5. execute script purge_record_jobs.py
