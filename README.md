@@ -25,9 +25,10 @@ This repository documents a migration process moving source data from an MySQL d
 
 ## File Structure
 ### Deliverable Documents
-  - Data_Migration_Plan_Overview.pdf
-  - Mapping_Document.xlsx
-  - Salesforce_Data_Migration_Mock_Project_Run_Book.xlsx
+  - Deliverable_Documents/
+    - Data_Migration_Plan_Overview.pdf
+    - Mapping_Document.xlsx
+    - Salesforce_Data_Migration_Mock_Project_Run_Book.xlsx
 
 ### Source Data And Source Data Setup
   - MockData/
