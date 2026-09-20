@@ -74,6 +74,7 @@ This repository documents a migration process moving source data from an MySQL d
   6. 106_update_sf_quotes.py
   7. 107_update_sf_orders_activate_order.py
   8. 108_update_sf_orders_contract_order.py
+  9. 109_activate_contracts.py
 ### Migration Backout-Delete Scripts
   - Scripts must be executed in descending order, 206_delete_sf_orders.py is deprecated, redundant after running 207_delete_sf_order_lines.py.
   1. 209_delete_sf_subscriptions.py
