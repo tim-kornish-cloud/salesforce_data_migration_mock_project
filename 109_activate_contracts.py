@@ -1,8 +1,8 @@
 """
 Author: Timothy Kornish
-CreatedDate: June - 14 - 2026
+CreatedDate: September 20 - 2026
 Description: Log into salesforce and query existing contracts with status = Draft from migrated quotes.
-             Update SBQQ__Contracted__C = true.
+             Update Status = Activated.
 """
 
 import numpy as np
