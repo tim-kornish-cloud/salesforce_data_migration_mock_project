@@ -65,7 +65,7 @@ sf_orders_df = SF_Utils.load_query_with_lookups_into_dataframe(order_query_resul
 # encode the dataframe before uploading to delete
 sf_orders_df = Utils.encode_df(sf_orders_df)
 # set contractede to true, generating contracts and subscriptions
-sf_orders_df['SBQQ__Contracted__C'] = True
+sf_orders_df['SBQQ__Contracted__c'] = True
 
 # upload the records to salesforce
 # batch_size = 10 since the CPQ triggers are needed to generate new records
