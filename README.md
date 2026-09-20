@@ -4,6 +4,7 @@ This repository documents a migration process moving source data from an MySQL d
 
 ## Table of Contents
 * [File Structure](#File-Structure)
+  * [Deliverable Documents](#Deliverable-Documents)
   * [Source Data And Source Data Setup](#Source-Data-And-Source-Data-Setup)
   * [Source Database](#Source-Database)
   * [Staging Database](#Staging-Database)
@@ -23,6 +24,11 @@ This repository documents a migration process moving source data from an MySQL d
 * [Purge Apex Record Jobs](#Purge-Apex-Record-Jobs)
 
 ## File Structure
+### Deliverable Documents
+  - Data_Migration_Plan_Overview.pdf
+  - Mapping_Document.xlsx
+  - Salesforce_Data_Migration_Mock_Project_Run_Book.xlsx
+
 ### Source Data And Source Data Setup
   - MockData/
     - holds raw csv data downloaded from Mockaroo.com
