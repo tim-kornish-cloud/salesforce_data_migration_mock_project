@@ -106,20 +106,25 @@ if len(sf_accounts_df) != 0:
     both_df.drop(['_merge'], axis = 1, inplace = True)
     sf_accounts_only_df.drop(['_merge'], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    both_dtypes = Utils.get_dtypes_as_list(both_df)
-    sf_only_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
-
     # mssql table name the dataframe is being inserted into
     both_table = "[dbo].[Account_101_Account_In_Both_Systems]"
 
     # mssql table name the dataframe is being inserted into
     sf_only_table = "[dbo].[Account_101_sf_accounts_only]"
 
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, both_table, both_df, both_dtypes, drop_table = True)
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_only_table, sf_accounts_only_df, sf_only_dtypes, drop_table = True)
+    # check if fallout dataframe is empty before processing into reporting tables
+    if not (both_df.empty or len(both_df) == 0):
+        # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+        both_dtypes = Utils.get_dtypes_as_list(both_df)
+        # upload success records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, both_table, both_df, both_dtypes, drop_table = True)
+
+
+    if not (sf_accounts_only_df.empty or len(sf_accounts_only_df) == 0):
+        # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+        sf_only_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
+        # upload fallout records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_only_table, sf_accounts_only_df, sf_only_dtypes, drop_table = True)
 else:
     # if there are no existing accounts in Salesforce, insert all staging accounts
     accounts_to_insert_df = stg_account_df
@@ -148,17 +153,25 @@ accounts_to_insert_df['Migrated_Record__c'] = True
 # upload the records to salesforce
 passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, accounts_to_insert_df, object, 'insert', success_file, fallout_file)
 
+
+
 # mssql table name the dataframe is being inserted into
 success_table_name = "[dbo].[trgt_101_Account_insert_Success]"
 # mssql table name the dataframe is being inserted into
 fallout_table_name = "[dbo].[trgt_101_Account_insert_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-passing_dtypes = Utils.get_dtypes_as_list(passing_df)
-fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(passing_df) == 0):
+    # remove error column on passing df
+    passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(fallout_df) == 0):
+    # generate column types from fallout dataframe
+    fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
