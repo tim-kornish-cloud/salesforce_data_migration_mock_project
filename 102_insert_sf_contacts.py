@@ -98,20 +98,23 @@ if len(sf_accounts_df) != 0:
     sf_accounts_only_df.drop(["_merge"], axis = 1, inplace = True)
     mssql_contacts_only_df.drop(["_merge"], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    sf_only_accounts_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
-    mssql_contacts_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contacts_only_df)
-
     # mssql table name the dataframe is being inserted into
-    sf_only_accounts_table = "[dbo].[trgt_102_Contact_sf_accounts_only]"
-
+    sf_only_accounts_table = "[dbo].[plr_102_Contact_sf_accounts_only]"
     # mssql table name the dataframe is being inserted into
-    mssql_contacts_only_df_table = "[dbo].[trgt_102_Contact_mssql_contacts_only]"
+    mssql_contacts_only_df_table = "[dbo].[plr_102_Contact_mssql_contacts_only]"
 
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_only_accounts_table, sf_accounts_only_df, sf_only_accounts_dtypes, drop_table = True)
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, mssql_contacts_only_df_table, mssql_contacts_only_df, mssql_contacts_only_df_dtypes, drop_table = True)
+    # check if fallout dataframe is empty before processing into reporting tables
+    if not (sf_accounts_only_df.empty or len(sf_accounts_only_df) == 0):
+        # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+        sf_only_accounts_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
+        # upload success records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_only_accounts_table, sf_accounts_only_df, sf_only_accounts_dtypes, drop_table = True)
+
+    if not (mssql_contacts_only_df.empty or len(mssql_contacts_only_df) == 0):
+        # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+        mssql_contacts_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contacts_only_df)
+        # upload fallout records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, mssql_contacts_only_df_table, mssql_contacts_only_df, mssql_contacts_only_df_dtypes, drop_table = True)
 
 # query existing Contacts from salesforce
 # query string to select records from salesforce
@@ -136,20 +139,24 @@ if len(sf_contacts_df) != 0:
     sf_contacts_only_df.drop(["_merge"], axis = 1, inplace = True)
     both_df.drop(["_merge"], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    sf_contacts_only_dtypes = Utils.get_dtypes_as_list(sf_contacts_only_df)
-    both_df_dtypes = Utils.get_dtypes_as_list(both_df)
+    # mssql table name the dataframe is being inserted into
+    sf_contacts_only_table = "[dbo].[plr_102_Contact_sf_contacts_only]"
 
     # mssql table name the dataframe is being inserted into
-    sf_contacts_only_table = "[dbo].[trgt_102_Contact_sf_contacts_only]"
+    both_df_table = "[dbo].[plr_102_Contact_duplicate_contact_exists_in_sf]"
 
-    # mssql table name the dataframe is being inserted into
-    both_df_table = "[dbo].[trgt_102_Contact_duplicate_contact_exists_in_sf]"
+    # check if fallout dataframe is empty before processing into reporting tables
+    if not (sf_contacts_only_df.empty or len(sf_contacts_only_df) == 0):
+        # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+        sf_contacts_only_dtypes = Utils.get_dtypes_as_list(sf_contacts_only_df)
+        # upload success records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_contacts_only_table, sf_contacts_only_df, sf_contacts_only_dtypes, drop_table = True)
 
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_contacts_only_table, sf_contacts_only_df, sf_contacts_only_dtypes, drop_table = True)
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, both_df_table, both_df, both_df_dtypes, drop_table = True)
+    if not (both_df.empty or len(both_df) == 0):
+        # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+        both_df_dtypes = Utils.get_dtypes_as_list(both_df)
+        # upload fallout records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, both_df_table, both_df, both_df_dtypes, drop_table = True)
 
 else:
     # if there are no matching contacts in SF, copy and load the entire staging table dataframe with related account Ids
@@ -182,12 +189,18 @@ success_table_name = "[dbo].[trgt_102_Contact_insert_Success]"
 # mssql table name the dataframe is being inserted into
 fallout_table_name = "[dbo].[trgt_102_Contact_insert_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-passing_dtypes = Utils.get_dtypes_as_list(passing_df)
-fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(passing_df) == 0):
+    # remove error column on passing df
+    passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(fallout_df) == 0):
+    # generate column types from fallout dataframe
+    fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)

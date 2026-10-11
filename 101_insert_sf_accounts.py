@@ -107,10 +107,10 @@ if len(sf_accounts_df) != 0:
     sf_accounts_only_df.drop(['_merge'], axis = 1, inplace = True)
 
     # mssql table name the dataframe is being inserted into
-    both_table = "[dbo].[Account_101_Account_In_Both_Systems]"
+    both_table = "[dbo].[plr_101_Account_In_Both_Systems]"
 
     # mssql table name the dataframe is being inserted into
-    sf_only_table = "[dbo].[Account_101_sf_accounts_only]"
+    sf_only_table = "[dbo].[plr_101_sf_accounts_only]"
 
     # check if fallout dataframe is empty before processing into reporting tables
     if not (both_df.empty or len(both_df) == 0):
