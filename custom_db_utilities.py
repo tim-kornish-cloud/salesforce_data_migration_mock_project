@@ -541,10 +541,11 @@ class MSSQL_Utilities:
         # try except block
         try:
             # check if the dataframe being uploaded is empty / populated
-            if df.empty:
+            if df.empty or len(df) == 0:
                 log.info(f"[Dataframe empty, nothing to upload.]")
                 # exit function if df is empty
                 return None
+            df = df.astype(object).where(pd.notnull(df), None)
             # if the df column list matches the table, use all columns
             if use_all_columns_in_df:
                 # generate a list of all columns
@@ -575,7 +576,7 @@ class MSSQL_Utilities:
             # convert the rows in the dataframe into tuples
             data = [tuple(x) for x in df.values]
             # set the bulk insert for pyodbc cursor.fast_executemany = True
-            cursor.fast_executemany = True
+            cursor.fast_executemany = False
             # execute insert of records
             cursor.executemany(sql, data)
             # commit the sql statement
@@ -793,8 +794,11 @@ class MSSQL_Utilities:
                         # check if type == int
                         if df[col].dtypes == "int64":
                             create_table_sql = create_table_sql + f"[{col}] INT NULL,\n"
-                        # check if type == string, date, or object
+                        # check if type == date, or object
                         if df[col].dtypes == "object":
+                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR]({varchar_size}) NULL,\n"
+                        # check if type == string
+                        if df[col].dtypes == "str":
                             create_table_sql = create_table_sql + f"[{col}] [NVARCHAR]({varchar_size}) NULL,\n"
                         # check if type == float
                         if df[col].dtypes == "float64":
@@ -2210,8 +2214,9 @@ class Custom_Utilities:
             if custom_mapping:
                 # override mapping
                 mapping = custom_mapping
-                # create dtypes list then convert the values with list comprehension
-            dtypes_list = [mapping[str(x)] for x in df.dtypes.to_list()]
+            # create dtypes list then convert the values with list comprehension
+            #dtypes_list = [mapping[str(x)] for x in df.dtypes.to_list()] # this was the old way that no longer works
+            dtypes_list = list(map(str,df.dtypes.to_list()))
             # return list of dtypes
             return dtypes_list
         # exception block - error returning a datetime string of now
