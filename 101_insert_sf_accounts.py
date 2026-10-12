@@ -48,23 +48,29 @@ fallout_file = dir_path + "\\Output\\INSERT\\FALLOUT_Insert_" + environment + "_
 connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # select accounts to match against the csv to not attempt to insert duplicates
-select_query = """SELECT
+select_query = f"""SELECT DISTINCT TOP {size} [Acc].[account_number_external_id]
        [phone]
       ,[company_name]
       ,[industry]
       ,[annual_revenue]
-      ,[account_number_external_id]
+      ,[Acc].[account_number_external_id]
       ,[number_of_locations]
       ,[number_of_employees]
       ,[sla]
       ,[sla_serial_number]
-  FROM [Data_Engineering].[dbo].[STG_SOURCE_Accounts]"""
+      ,[contract_number]
+      ,[start_date]
+      ,[end_date]
+  FROM [Data_Engineering].[dbo].[STG_SOURCE_Accounts] AS Acc
+  INNER JOIN [Data_Engineering].[dbo].[STG_SOURCE_Contracts] AS Con
+  ON [Acc].[account_number_external_id] = [Con].[account_number_external_id]
+  WHERE [end_date] > CAST(GETDATE() AS DATE)"""
 
 # accounts in the mssql table shown in the query above
 stg_account_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)
 
 # only keep subset of records to load to not surpass 5Mb storage limit of Salesforce Org.
-stg_account_df = stg_account_df.head(size)
+#stg_account_df = stg_account_df.head(size)
 
 # get credentials for salesforce login
 # declare which environment this script will perform operations against,
