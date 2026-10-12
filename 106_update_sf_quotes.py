@@ -175,6 +175,8 @@ sf_quotes_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_query_resul
 # encode the dataframe before uploading to delete
 sf_quotes_df = Utils.encode_df(sf_quotes_df)
 
+# update all quotes SBQQ__Status__c = Accepted
+sf_quotes_df['SBQQ__Status__c'] = "Accepted"
 # update all quotes to SBQQ__Ordered__c = true
 sf_quotes_df['SBQQ__Ordered__c'] = True
 
