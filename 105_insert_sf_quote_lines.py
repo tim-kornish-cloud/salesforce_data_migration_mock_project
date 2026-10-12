@@ -14,6 +14,7 @@ import pandas as pd
 import os
 from custom_db_utilities import  MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
+import sys
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
@@ -103,20 +104,31 @@ if len(sf_quotes_df) != 0:
     sf_quotes_only_df.drop(['_merge'], axis = 1, inplace = True)
     mssql_contract_lines_only_df.drop(['_merge'], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    sf_quotes_only_df_dtypes = Utils.get_dtypes_as_list(sf_quotes_only_df)
-    mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
-
     # mssql table name the dataframe is being inserted into
-    sf_quotes_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_sf_only_quote]"
+    sf_quotes_only_df_table = "[dbo].[plr_105_SBQQ__QuoteLine__c_sf_only_quote]"
     # mssql table name the dataframe is being inserted into
-    mssql_contract_lines_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_stg_only_contract_line]"
+    mssql_contract_lines_only_df_table = "[dbo].[plr_105_SBQQ__QuoteLine__c_stg_only_contract_line]"
 
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_quotes_only_df_table, sf_quotes_only_df, sf_quotes_only_df_dtypes, drop_table = True)
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
+    # check if sf_quotes_only_df dataframe is empty before processing into reporting tables
+    if not (len(sf_quotes_only_df) == 0):
+        # generate column types from sf_quotes_only_df dataframe
+        sf_quotes_only_df_dtypes = Utils.get_dtypes_as_list(sf_quotes_only_df)
+        # upload sf_quotes_only_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_quotes_only_df_table, sf_quotes_only_df, sf_quotes_only_df_dtypes, drop_table = True)
 
+    # check if mssql_contract_lines_only_df dataframe is empty before processing into reporting tables
+    if not (len(mssql_contract_lines_only_df) == 0):
+        # generate column types from mssql_contract_lines_only_df dataframe
+        mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
+        # upload mssql_contract_lines_only_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
+
+# if there are no migrated quotes, terminate the script
+else:
+    # log message to terminate script
+    Utils.log_message_to_console("No migrated quotes to connect quote lines to, terminate script.")
+    # terminate script command
+    sys.exit()
 # Query SF Products - map product to sf product
 # product mapping from source product name to salesforce product name
 product_mapping  = {"diesel-large" : "GenWatt Diesel 1000kW",
@@ -165,20 +177,31 @@ if len(sf_products_df) != 0:
     sf_only_products_df.drop(['_merge'], axis = 1, inplace = True)
     mssql_contract_lines_only_df.drop(['_merge'], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    sf_only_products_df_dtypes = Utils.get_dtypes_as_list(sf_only_products_df)
-    mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
-
     # mssql table name the dataframe is being inserted into
-    sf_only_products_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_sf_only_products]"
+    sf_only_products_df_table = "[dbo].[plr_105_SBQQ__QuoteLine__c_sf_only_products]"
     # mssql table name the dataframe is being inserted into
-    mssql_contract_lines_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_contract_line_no_sf_product]"
+    mssql_contract_lines_only_df_table = "[dbo].[plr_105_SBQQ__QuoteLine__c_contract_line_no_sf_product]"
 
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_only_products_df_table, sf_only_products_df, sf_only_products_df_dtypes, drop_table = True)
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
+    # check if sf_only_products_df dataframe is empty before processing into reporting tables
+    if not (len(sf_only_products_df) == 0):
+        # generate column types from sf_only_products_df dataframe
+        sf_only_products_df_dtypes = Utils.get_dtypes_as_list(sf_only_products_df)
+        # upload sf_only_products_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_only_products_df_table, sf_only_products_df, sf_only_products_df_dtypes, drop_table = True)
 
+    # check if mssql_contract_lines_only_df dataframe is empty before processing into reporting tables
+    if not (len(mssql_contract_lines_only_df) == 0):
+        # generate column types from mssql_contract_lines_only_df dataframe
+        mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
+        # upload mssql_contract_lines_only_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
+
+# if there are no products in salesforce, terminate the script
+else:
+    # log message to terminate script
+    Utils.log_message_to_console("No products to connect quote lines to, terminate script.")
+    # terminate script command
+    sys.exit()
 # Query Pricebook entries to get list unit price for mapped Products
 # query existing Pricebook entries from salesforce
 # query string to select records from salesforce
@@ -204,20 +227,31 @@ if len(sf_pricebookentry_df) != 0:
     sf_pricebookentry_only_df.drop(['_merge'], axis = 1, inplace = True)
     mssql_contract_lines_only_df.drop(['_merge'], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    sf_pricebookentry_only_df_dtypes = Utils.get_dtypes_as_list(sf_pricebookentry_only_df)
-    mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
-
     # mssql table name the dataframe is being inserted into
-    sf_pricebookentry_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_pricebook_missing_product]"
+    sf_pricebookentry_only_df_table = "[dbo].[plr_105_SBQQ__QuoteLine__c_pricebook_missing_product]"
     # mssql table name the dataframe is being inserted into
-    mssql_contract_lines_only_df_table = "[dbo].[trgt_105_SBQQ__QuoteLine__c_stg_contract_line_no_pricebook]"
+    mssql_contract_lines_only_df_table = "[dbo].[plr_105_SBQQ__QuoteLine__c_stg_contract_line_no_pricebook]"
 
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_pricebookentry_only_df_table, sf_pricebookentry_only_df, sf_pricebookentry_only_df_dtypes, drop_table = True)
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
+    # check if sf_only_products_df dataframe is empty before processing into reporting tables
+    if not (len(sf_pricebookentry_only_df) == 0):
+        # generate column types from sf_only_products_df dataframe
+        sf_pricebookentry_only_df_dtypes = Utils.get_dtypes_as_list(sf_pricebookentry_only_df)
+        # upload sf_only_products_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_pricebookentry_only_df_table, sf_pricebookentry_only_df, sf_pricebookentry_only_df_dtypes, drop_table = True)
 
+    # check if mssql_contract_lines_only_df dataframe is empty before processing into reporting tables
+    if not (len(mssql_contract_lines_only_df) == 0):
+        # generate column types from mssql_contract_lines_only_df dataframe
+        mssql_contract_lines_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contract_lines_only_df)
+        # upload mssql_contract_lines_only_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, mssql_contract_lines_only_df_table, mssql_contract_lines_only_df, mssql_contract_lines_only_df_dtypes, drop_table = True)
+
+# if there are no migrated quotes, terminate the script
+else:
+    # log message to terminate script
+    Utils.log_message_to_console("No pricebook entries for products, terminate script.")
+    # terminate script command
+    sys.exit()
 
 
 # if name contains install, number = 2, if name contains sla, number = 3, else number = 1
@@ -256,12 +290,18 @@ success_table_name = "[dbo].[trgt_105_SBQQ__QuoteLine__c_insert_Success]"
 # mssql table name the dataframe is being inserted into
 fallout_table_name = "[dbo].[trgt_105_SBQQ__QuoteLine__c_insert_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-passing_dtypes = Utils.get_dtypes_as_list(passing_df)
-fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(passing_df) == 0):
+    # remove error column on passing df
+    passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+    # upload passing records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(fallout_df) == 0):
+    # generate column types from fallout dataframe
+    fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)

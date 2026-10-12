@@ -95,20 +95,27 @@ success_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_update_Primary_Success]"
 # mssql table name the dataframe is being updated into
 fallout_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_update_Primary_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-passing_dtypes = Utils.get_dtypes_as_list(passing_df)
-fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(passing_df) == 0):
+    # remove error column on passing df
+    passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+    # upload passing records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(fallout_df) == 0):
+    # generate column types from fallout dataframe
+    fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
 
 # set delay after updating quotes before ordering them
-print("Begin 30 second time delay before updating quotelines to calculate quotes.")
-time.sleep(30)
-print("Time delay over, start calculating quotes.")
+# log message to delay processing
+Utils.log_message_to_console("Begin 10 second time delay before updating quotelines to calculate quotes.")
+time.sleep(10)
+Utils.log_message_to_console("Time delay over, start calculating quotes.")
 
 # query existing quotelines from salesforce
 # query string to select records from salesforce
@@ -132,20 +139,27 @@ success_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_ql_update_Success]"
 # mssql table name the dataframe is being inserted into
 fallout_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_ql_update_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-passing_dtypes = Utils.get_dtypes_as_list(passing_df)
-fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(passing_df) == 0):
+    # remove error column on passing df
+    passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+    # upload passing records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(fallout_df) == 0):
+    # generate column types from fallout dataframe
+    fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
 
 # set delay after updating quotes before ordering them
-print("Begin 1 minute time delay before ordering quotes.")
-time.sleep(60)
-print("Time delay over, start ordering quotes.")
+# log message to delay processing
+Utils.log_message_to_console("Begin 10 second time delay before updating quotelines to calculate quotes.")
+time.sleep(10)
+Utils.log_message_to_console("Time delay over, start calculating quotes.")
 
 # upload success records to reporting table
 MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
@@ -175,12 +189,18 @@ success_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_Ordered_Success]"
 # mssql table name the dataframe is being inserted into
 fallout_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_Ordered_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-passing_dtypes = Utils.get_dtypes_as_list(passing_df)
-fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(passing_df) == 0):
+    # remove error column on passing df
+    passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+    # upload passing records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(fallout_df) == 0):
+    # generate column types from fallout dataframe
+    fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)

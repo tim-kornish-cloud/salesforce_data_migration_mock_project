@@ -15,6 +15,7 @@ import pandas as pd
 import os
 from custom_db_utilities import  MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
+import sys
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
@@ -103,18 +104,24 @@ if len(sf_accounts_df) != 0:
     # mssql table name the dataframe is being inserted into
     mssql_contacts_only_df_table = "[dbo].[plr_102_Contact_mssql_contacts_only]"
 
-    # check if fallout dataframe is empty before processing into reporting tables
+    # check if sf_accounts_only_df dataframe is empty before processing into reporting tables
     if not (sf_accounts_only_df.empty or len(sf_accounts_only_df) == 0):
         # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
         sf_only_accounts_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
-        # upload success records to reporting table
+        # upload sf_accounts_only_df records to reporting table
         MSSQL_Utils.upload_reports(connection, cursor, sf_only_accounts_table, sf_accounts_only_df, sf_only_accounts_dtypes, drop_table = True)
 
     if not (mssql_contacts_only_df.empty or len(mssql_contacts_only_df) == 0):
-        # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
+        # generate datatypes list for mssql_contacts_only_df only contacts
         mssql_contacts_only_df_dtypes = Utils.get_dtypes_as_list(mssql_contacts_only_df)
-        # upload fallout records to reporting table
+        # upload mssql_contacts_only_df records to reporting table
         MSSQL_Utils.upload_reports(connection, cursor, mssql_contacts_only_df_table, mssql_contacts_only_df, mssql_contacts_only_df_dtypes, drop_table = True)
+# if there are no migrated accounts, terminate the script
+else:
+    # log message to terminate script
+    Utils.log_message_to_console("No migrated Accounts to connect Contacts to, terminate script.")
+    # terminate script command
+    sys.exit()
 
 # query existing Contacts from salesforce
 # query string to select records from salesforce
@@ -141,7 +148,6 @@ if len(sf_contacts_df) != 0:
 
     # mssql table name the dataframe is being inserted into
     sf_contacts_only_table = "[dbo].[plr_102_Contact_sf_contacts_only]"
-
     # mssql table name the dataframe is being inserted into
     both_df_table = "[dbo].[plr_102_Contact_duplicate_contact_exists_in_sf]"
 
@@ -157,7 +163,6 @@ if len(sf_contacts_df) != 0:
         both_df_dtypes = Utils.get_dtypes_as_list(both_df)
         # upload fallout records to reporting table
         MSSQL_Utils.upload_reports(connection, cursor, both_df_table, both_df, both_df_dtypes, drop_table = True)
-
 else:
     # if there are no matching contacts in SF, copy and load the entire staging table dataframe with related account Ids
     contacts_to_insert_df = contacts_with_accounts_df

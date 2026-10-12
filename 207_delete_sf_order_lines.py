@@ -88,7 +88,31 @@ sf_order_items_df = Utils.encode_df(sf_order_items_df)
 sf_order_items_df['SBQQ__Status__c'] = 'Draft'
 
 # upload the records to salesforce for deletion
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'update', success_file_1, fallout_file_1)
+order_item_draft_passing_df, order_item_draft_fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'update', success_file_1, fallout_file_1)
+
+# initiate an MS SQL cursor to query with
+connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
+
+# mssql table name the dataframe is being inserted into
+order_item_draft_success_table_name = "[dbo].[trgt_del_207_OrderItem_update_status_Success]"
+# mssql table name the dataframe is being inserted into
+order_item_draft_fallout_table_name = "[dbo].[trgt_del_207_OrderItem_update_status_Fallout]"
+
+# check if order_item_draft_passing_df dataframe is empty before processing into reporting tables
+if not (len(order_item_draft_passing_df) == 0):
+    # remove error column on order_item_draft_passing_df df
+    order_item_draft_passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from order_item_draft_passing_df dataframe
+    order_item_draft_passing_dtypes = Utils.get_dtypes_as_list(order_item_draft_passing_df)
+    # upload order_item_draft_passing_df records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_item_draft_success_table_name, order_item_draft_passing_df, order_item_draft_passing_dtypes, drop_table = True)
+
+# check if order_item_draft_fallout_df dataframe is empty before processing into reporting tables
+if not (len(order_item_draft_fallout_df) == 0):
+    # generate column types from order_item_draft_fallout_df dataframe
+    order_item_draft_fallout_dtypes = Utils.get_dtypes_as_list(order_item_draft_fallout_df)
+    # upload order_item_draft_fallout_df records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_item_draft_fallout_table_name, order_item_draft_fallout_df, order_item_draft_fallout_dtypes, drop_table = True)
 
 # query string to select records from salesforce
 order_query = "SELECT Id FROM Order WHERE SBQQ__Quote__r.Migrated_Record__c = True OR CreatedBy.Name = 'Timothy Kornish'"
@@ -105,39 +129,85 @@ sf_orders_df['SBQQ__Contracted__c'] = False
 # remove relationship between order and quote setting SBQQ__Quote__c to null on orders
 sf_orders_df['SBQQ__Quote__c'] = ""
 # upload the records to salesforce for update
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_2, fallout_file_2)
+order_contracted_passing_df, order_contracted_fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_2, fallout_file_2)
+
+# mssql table name the dataframe is being inserted into
+order_contracted_success_table_name = "[dbo].[trgt_del_207_Order_contracted_udpate_Success]"
+# mssql table name the dataframe is being inserted into
+order_contracted_fallout_table_name = "[dbo].[trgt_del_207_Order_contracted_udpate_Fallout]"
+
+# check if order_contracted_passing_df dataframe is empty before processing into reporting tables
+if not (len(order_contracted_passing_df) == 0):
+    # remove error column on order_contracted_passing_df df
+    order_contracted_passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from order_contracted_passing_df dataframe
+    order_contracted_passing_dtypes = Utils.get_dtypes_as_list(order_contracted_passing_df)
+    # upload order_contracted_passing_df records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_contracted_success_table_name, order_contracted_passing_df, order_contracted_passing_dtypes, drop_table = True)
+
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(order_contracted_fallout_df) == 0):
+    # generate column types from fallout dataframe
+    order_contracted_fallout_dtypes = Utils.get_dtypes_as_list(order_contracted_fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_contracted_fallout_table_name, order_contracted_fallout_df, order_contracted_fallout_dtypes, drop_table = True)
 
 # update status  = draft
 sf_orders_df['Status'] = 'Draft'
 # remove contracted column
 sf_orders_df.drop(['SBQQ__Contracted__c'], axis = 1, inplace = True)
 # upload the records to salesforce for update
-SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_3, fallout_file_3)
+order_status_passing_df, order_status_fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_orders_df, 'Order', 'update', success_file_3, fallout_file_3)
 
-# When deleting only sumbit Id column
-sf_order_items_df = sf_order_items_df[['Id']]
+# mssql table name the dataframe is being inserted into
+order_status_success_table_name = "[dbo].[trgt_del_207_Order_status_udpate_Success]"
+# mssql table name the dataframe is being inserted into
+order_status_fallout_table_name = "[dbo].[trgt_del_207_Order_status_udpate_Fallout]"
+
+# check if order_status_passing_df dataframe is empty before processing into reporting tables
+if not (len(order_status_passing_df) == 0):
+    # remove error column on order_status_passing_df df
+    order_status_passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from order_status_passing_df dataframe
+    order_status_passing_dtypes = Utils.get_dtypes_as_list(order_status_passing_df)
+    # upload order_status_passing_df records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_status_success_table_name, order_status_passing_df, order_status_passing_dtypes, drop_table = True)
+
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(order_status_fallout_df) == 0):
+    # generate column types from fallout dataframe
+    order_status_fallout_dtypes = Utils.get_dtypes_as_list(order_status_fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_status_fallout_table_name, order_status_fallout_df, order_status_fallout_dtypes, drop_table = True)
+
+if not (len(sf_order_items_df) == 0):
+    # When deleting only sumbit Id column
+    sf_order_items_df = sf_order_items_df[['Id']]
 
 # delete migrated salesforce order_item records
 # upload the records to salesforce for deletion
 order_item_passing_df, order_item_fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_order_items_df, 'OrderItem', 'delete', success_file_4, fallout_file_4)
-
-# initiate an MS SQL cursor to query with
-connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # mssql table name the dataframe is being inserted into
 order_item_success_table_name = "[dbo].[trgt_del_207_OrderItem_Success]"
 # mssql table name the dataframe is being inserted into
 order_item_fallout_table_name = "[dbo].[trgt_del_207_OrderItem_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-order_item_passing_dtypes = Utils.get_dtypes_as_list(order_item_passing_df)
-order_item_fallout_dtypes = Utils.get_dtypes_as_list(order_item_fallout_df)
+# check if order_item_passing_df dataframe is empty before processing into reporting tables
+if not (len(order_item_passing_df) == 0):
+    # remove error column on order_item_passing_df df
+    order_item_passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from order_item_passing_df dataframe
+    order_item_passing_dtypes = Utils.get_dtypes_as_list(order_item_passing_df)
+    # upload order_item_passing_df records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_item_success_table_name, order_item_passing_df, order_item_passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, order_item_success_table_name, order_item_passing_df, order_item_passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, order_item_fallout_table_name, order_item_fallout_df, order_item_fallout_dtypes, drop_table = True)
+# check if order_item_fallout_df dataframe is empty before processing into reporting tables
+if not (len(order_item_fallout_df) == 0):
+    # generate column types from order_item_fallout_df dataframe
+    order_item_fallout_dtypes = Utils.get_dtypes_as_list(order_item_fallout_df)
+    # upload order_item_fallout_df records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_item_fallout_table_name, order_item_fallout_df, order_item_fallout_dtypes, drop_table = True)
 
 # When deleting only sumbit Id column
 sf_orders_df = sf_orders_df[['Id']]
@@ -150,12 +220,18 @@ order_success_table_name = "[dbo].[trgt_del_207_Order_Success]"
 # mssql table name the dataframe is being inserted into
 order_fallout_table_name = "[dbo].[trgt_del_207_Order_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-order_passing_dtypes = Utils.get_dtypes_as_list(order_passing_df)
-order_fallout_dtypes = Utils.get_dtypes_as_list(order_fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(order_passing_df) == 0):
+    # remove error column on passing df
+    order_passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    order_passing_dtypes = Utils.get_dtypes_as_list(order_passing_df)
+    # upload passing records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_success_table_name, order_passing_df, order_passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, order_success_table_name, order_passing_df, order_passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, order_fallout_table_name, order_fallout_df, order_fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(order_fallout_df) == 0):
+    # generate column types from fallout dataframe
+    order_fallout_dtypes = Utils.get_dtypes_as_list(order_fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, order_fallout_table_name, order_fallout_df, order_fallout_dtypes, drop_table = True)

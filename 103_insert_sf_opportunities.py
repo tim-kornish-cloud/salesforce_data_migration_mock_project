@@ -14,6 +14,7 @@ import pandas as pd
 import os
 from custom_db_utilities import  MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 from credentials import Credentials
+import sys
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
@@ -93,20 +94,29 @@ if len(sf_accounts_df) != 0:
     sf_accounts_only_df.drop(['_merge'], axis = 1, inplace = True)
     mssql_contracts_no_account_df.drop(['_merge'], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    sf_accounts_only_df_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
-    mssql_contracts_no_account_df_dtypes = Utils.get_dtypes_as_list(mssql_contracts_no_account_df)
-
     # mssql table name the dataframe is being inserted into
-    sf_accounts_only_df_table = "[dbo].[trgt_103_Opportunity_sf_accounts_only]"
+    sf_accounts_only_df_table = "[dbo].[plr_103_Opportunity_sf_accounts_only]"
     # mssql table name the dataframe is being inserted into
-    mssql_contracts_no_account_df_table = "[dbo].[trgt_103_Opportunity_no_account_in_target]"
+    mssql_contracts_no_account_df_table = "[dbo].[plr_103_Opportunity_no_account_in_target]"
 
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_accounts_only_df_table, sf_accounts_only_df, sf_accounts_only_df_dtypes, drop_table = True)
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, mssql_contracts_no_account_df_table, mssql_contracts_no_account_df, mssql_contracts_no_account_df_dtypes, drop_table = True)
-
+    # check if sf_accounts_only_df dataframe is empty before processing into reporting tables
+    if not (len(sf_accounts_only_df) == 0):
+        # generate column types from sf_accounts_only_df dataframe
+        sf_accounts_only_df_dtypes = Utils.get_dtypes_as_list(sf_accounts_only_df)
+        # upload sf_accounts_only_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_accounts_only_df_table, sf_accounts_only_df, sf_accounts_only_df_dtypes, drop_table = True)
+    # check if mssql_contracts_no_account_df dataframe is empty before processing into reporting tables
+    if not (len(mssql_contracts_no_account_df) == 0):
+        # generate column types from mssql_contracts_no_account_df dataframe
+        mssql_contracts_no_account_df_dtypes = Utils.get_dtypes_as_list(mssql_contracts_no_account_df)
+        # upload mssql_contracts_no_account_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, mssql_contracts_no_account_df_table, mssql_contracts_no_account_df, mssql_contracts_no_account_df_dtypes, drop_table = True)
+# if there are no migrated accounts, terminate the script
+else:
+    # log message to terminate script
+    Utils.log_message_to_console("No migrated Accounts to connect Opportunities to, terminate script.")
+    # terminate script command
+    sys.exit()
 # query Standard Pricebook from salesforce
 # query string to select records from salesforce
 Pricebook2_query = "SELECT Id, IsStandard, Name FROM Pricebook2 WHERE IsStandard = True"
@@ -145,19 +155,25 @@ if len(sf_opportunity_df) != 0:
     both_df.drop(['_merge'], axis = 1, inplace = True)
     sf_opportunity_only_df.drop(['_merge'], axis = 1, inplace = True)
 
-    # generate datatypes list for each dataframe of accounts in both systems and sf only accounts
-    both_df_dtypes = Utils.get_dtypes_as_list(both_df)
-    sf_opportunity_only_df_dtypes = Utils.get_dtypes_as_list(sf_opportunity_only_df)
-
     # mssql table name the dataframe is being inserted into
-    both_df_table = "[dbo].[trgt_103_Opportunity_opp_already_loaded]"
+    both_df_table = "[dbo].[plr_103_Opportunity_opp_already_loaded]"
     # mssql table name the dataframe is being inserted into
-    sf_opportunity_only_df_table = "[dbo].[trgt_103_Opportunity_opp_only_in_sf]"
+    sf_opportunity_only_df_table = "[dbo].[plr_103_Opportunity_opp_only_in_sf]"
 
-    # upload fallout records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, both_df_table, both_df, both_df_dtypes, drop_table = True)
-    # upload success records to reporting table
-    MSSQL_Utils.upload_reports(connection, cursor, sf_opportunity_only_df_table, sf_opportunity_only_df, sf_opportunity_only_df_dtypes, drop_table = True)
+    # check if passing dataframe is empty before processing into reporting tables
+    if not (len(both_df) == 0):
+        # generate column types from both_df dataframe
+        both_df_dtypes = Utils.get_dtypes_as_list(both_df)
+        # upload both_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, both_df_table, both_df, both_df_dtypes, drop_table = True)
+
+    # check if fallout dataframe is empty before processing into reporting tables
+    if not (len(sf_opportunity_only_df) == 0):
+        # generate column types from sf_opportunity_only_df dataframe
+        sf_opportunity_only_df_dtypes = Utils.get_dtypes_as_list(sf_opportunity_only_df)
+        # upload sf_opportunity_only_df records to reporting table
+        MSSQL_Utils.upload_reports(connection, cursor, sf_opportunity_only_df_table, sf_opportunity_only_df, sf_opportunity_only_df_dtypes, drop_table = True)
+
 else:
     # if there are no matching contracts in SF, copy and load the entire dataframe
     opportunity_to_insert_df = contracts_with_accounts_df
@@ -187,12 +203,18 @@ success_table_name = "[dbo].[trgt_103_Opportunity_insert_Success]"
 # mssql table name the dataframe is being inserted into
 fallout_table_name = "[dbo].[trgt_103_Opportunity_insert_Fallout]"
 
-# generate column types from passing and fallout dataframes,
-# should always be the same so redundant to run for each.
-passing_dtypes = Utils.get_dtypes_as_list(passing_df)
-fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+# check if passing dataframe is empty before processing into reporting tables
+if not (len(passing_df) == 0):
+    # remove error column on passing df
+    passing_df.drop(['RESULTS_errors'], axis = 1, inplace = True)
+    # generate column types from passing dataframe
+    passing_dtypes = Utils.get_dtypes_as_list(passing_df)
+    # upload success records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-# upload fallout records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
+# check if fallout dataframe is empty before processing into reporting tables
+if not (len(fallout_df) == 0):
+    # generate column types from fallout dataframe
+    fallout_dtypes = Utils.get_dtypes_as_list(fallout_df)
+    # upload fallout records to reporting table
+    MSSQL_Utils.upload_reports(connection, cursor, fallout_table_name, fallout_df, fallout_dtypes, drop_table = True)
