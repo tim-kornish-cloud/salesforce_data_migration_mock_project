@@ -349,6 +349,8 @@ class Salesforce_Utilities:
                     # convert the results from the upload into a pandas dataframe
                     # add a suffix to all new columns created from the upload
                     results_df = pd.DataFrame(results).add_prefix("RESULTS_")
+                    #conver results_error from json list of dict to a string with json.dump
+                    results_df["RESULTS_errors"] = results_df["RESULTS_errors"].apply(json.dumps)
                     # split the results into two group, passing and fallout
                     # passing is success = true
                     passing = passing + len(results_df[results_df["RESULTS_success"] == True])
@@ -795,20 +797,22 @@ class MSSQL_Utilities:
                 for index, col in enumerate(df.columns):
                     # confirm the loop index exists in the range of columns
                     if index < len(df.columns):
+                        if col == "RESULTS_errors":
+                            create_table_sql = create_table_sql + f"[{col}] [NVARCHAR](MAX) NULL,\n"
                         # check if type == int
-                        if df[col].dtypes == "int64":
+                        elif df[col].dtypes == "int64":
                             create_table_sql = create_table_sql + f"[{col}] INT NULL,\n"
                         # check if type == date, or object
-                        if df[col].dtypes == "object":
+                        elif df[col].dtypes == "object":
                             create_table_sql = create_table_sql + f"[{col}] [NVARCHAR]({varchar_size}) NULL,\n"
                         # check if type == string
-                        if df[col].dtypes == "str":
+                        elif df[col].dtypes == "str":
                             create_table_sql = create_table_sql + f"[{col}] [NVARCHAR]({varchar_size}) NULL,\n"
                         # check if type == float
-                        if df[col].dtypes == "float64":
+                        elif df[col].dtypes == "float64":
                             create_table_sql = create_table_sql + f"[{col}] DECIMAL(16,2) NULL,\n"
                         # check if type == boolean
-                        if df[col].dtypes == "bool":
+                        elif df[col].dtypes == "bool":
                             create_table_sql = create_table_sql + f"[{col}] [NVARCHAR](5) NULL,\n"
 
                 create_table_sql = create_table_sql[:-2] + """) ON [PRIMARY]"""
