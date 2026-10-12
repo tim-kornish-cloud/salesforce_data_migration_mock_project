@@ -58,9 +58,6 @@ select_query = f"""SELECT DISTINCT TOP {size} [Acc].[account_number_external_id]
       ,[number_of_employees]
       ,[sla]
       ,[sla_serial_number]
-      ,[contract_number]
-      ,[start_date]
-      ,[end_date]
   FROM [Data_Engineering].[dbo].[STG_SOURCE_Accounts] AS Acc
   INNER JOIN [Data_Engineering].[dbo].[STG_SOURCE_Contracts] AS Con
   ON [Acc].[account_number_external_id] = [Con].[account_number_external_id]
