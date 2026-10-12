@@ -747,7 +747,11 @@ class MSSQL_Utilities:
             log.info(f"[Uploading reports to table: {table_name}]")
 
             # update any NaN values to an empty string to avoid errors uploading to mssql table
-            df.fillna('', inplace=True)
+            # Select columns that are not float64 or int64
+            cols_to_fill = df.select_dtypes(exclude=["float64", "int64"]).columns
+
+            # Fill NaN with an empty string only on those columns
+            df[cols_to_fill] = df[cols_to_fill].fillna("")
 
             # create SQL string to create new table
             sql_string = self.generate_sql_create_table_string_from_df(df, table_name, drop_table, varchar_size) # drop_table doesn't make sense here since only can apply if table does not exist, but then can't drop what does not exist.
