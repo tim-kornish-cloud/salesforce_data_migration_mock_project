@@ -50,7 +50,8 @@ select_query = """ SELECT [account_number_external_id]
       ,[contract_number]
       ,[start_date]
       ,[end_date]
-  FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts]"""
+  FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts]
+  WHERE [end_date] > CAST(GETDATE() AS DATE)"""
 
 # accounts in the mssql table shown in the query above
 stg_contract_df = MSSQL_Utils.query_mssql_return_dataframe(select_query, cursor)

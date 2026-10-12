@@ -54,6 +54,7 @@ select_query = """SELECT scl.[contract_line_number]
       sc.[end_date]
   FROM [Data_Engineering].[dbo].[STG_SOURCE_Contract_Lines] as scl
   INNER JOIN [Data_Engineering].[dbo].[STG_SOURCE_Contracts] as sc ON sc.contract_number = scl.contract_number
+  WHERE [sc].[end_date] > CAST(GETDATE() AS DATE)
   ORDER BY contract_number"""
 
 # accounts in the mssql table shown in the query above
