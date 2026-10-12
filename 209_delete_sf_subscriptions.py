@@ -48,7 +48,7 @@ sf_token = Cred.get_token(sf_database, sf_environment)
 # create a instance of simple_salesforce to query and perform operations against salesforce with
 sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
 # query string to select records from salesforce
-subscription_query = "SELECT Id FROM SBQQ__Subscription__c" #WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True"
+subscription_query = "SELECT Id FROM SBQQ__Subscription__c WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True"
 # query salesforce and return the subscriptions to be deleted
 subscription_query_results = SF_Utils.query_salesforce(sf, subscription_query)
 
