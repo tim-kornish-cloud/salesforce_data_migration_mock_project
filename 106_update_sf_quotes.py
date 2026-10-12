@@ -131,9 +131,6 @@ sf_quote_lines_df = Utils.encode_df(sf_quote_lines_df)
 # upload the records to salesforce
 passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_quote_lines_df, 'SBQQ__QuoteLine__c', 'update', success_file_2, fallout_file_2, batch_size = 10)
 
-# initiate an MS SQL cursor to query with
-connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
-
 # mssql table name the dataframe is being inserted into
 success_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_ql_update_Success]"
 # mssql table name the dataframe is being inserted into
@@ -161,9 +158,6 @@ Utils.log_message_to_console("Begin 10 second time delay before updating quoteli
 time.sleep(10)
 Utils.log_message_to_console("Time delay over, start calculating quotes.")
 
-# upload success records to reporting table
-MSSQL_Utils.upload_reports(connection, cursor, success_table_name, passing_df, passing_dtypes, drop_table = True)
-
 # query existing quotes from salesforce
 # query string to select records from salesforce
 quote_query = "SELECT Id FROM SBQQ__Quote__c WHERE Migrated_Record__c = True AND SBQQ__Primary__c = True AND SBQQ__Ordered__c = False  "
@@ -182,9 +176,6 @@ sf_quotes_df['SBQQ__Ordered__c'] = True
 
 # upload the records to salesforce
 passing_df, fallout_df = SF_Utils.upload_dataframe_to_salesforce(sf, sf_quotes_df, object, 'update', success_file_3, fallout_file_3, batch_size = 10)
-
-# initiate an MS SQL cursor to query with
-connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), database = Cred.get_database())
 
 # mssql table name the dataframe is being inserted into
 success_table_name = "[dbo].[trgt_106_SBQQ__Quote__c_Ordered_Success]"
