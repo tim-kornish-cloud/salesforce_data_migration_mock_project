@@ -65,8 +65,42 @@ def test_account_tables(setup_mysql_connection, setup_mssql_connection):
     # assert the source table is equal to the target table
     assert_frame_equal(mysql_account_df, mssql_account_df)
 
-# def test_contact_tables(setup_mysql_connection, setup_mssql_connection):
-#
+def test_contact_tables(setup_mysql_connection, setup_mssql_connection):
+    mssql_select_query = """SELECT
+       [account_number_external_id]
+      ,[first_name]
+      ,[last_name]
+      ,[email]
+      ,[title]
+      ,[department]
+      ,[languages]
+  FROM [Data_Engineering].[dbo].[STG_SOURCE_Contacts]
+  ORDER BY [account_number_external_id], [last_name], [first_name]"""
+
+    mysql_select_query = """SELECT
+       account_number_external_id
+      ,first_name
+      ,last_name
+      ,email
+      ,title
+      ,department
+      ,languages
+  FROM data_engineering.contacts
+  ORDER BY account_number_external_id, last_name, first_name"""
+
+    # get mysql connection and cursor to interact with mysql tables
+    mysql_connection, mysql_cursor = setup_mysql_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+
+    # query mysql contact records
+    mysql_contact_df = MySQL_Utils.query_mysql_return_dataframe(mysql_select_query, mysql_connection)
+    # query mssql contact records
+    mssql_contact_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+
+    # assert the source table is equal to the target table
+    assert_frame_equal(mysql_contact_df, mssql_contact_df)
+
 # def test_contract_tables(setup_mysql_connection, setup_mssql_connection):
 #
 # def test_contract_lines_tables(setup_mysql_connection, setup_mssql_connection):
