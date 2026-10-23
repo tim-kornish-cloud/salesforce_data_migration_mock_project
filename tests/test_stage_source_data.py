@@ -10,11 +10,7 @@ import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from tests.conftest import setup_mysql_connection, setup_mssql_connection
-
 from custom_db_utilities import MSSQL_Utilities, Salesforce_Utilities, MySQL_Utilities
-
-
-pd.set_option('display.max_columns', None)
 
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 MySQL_Utils = MySQL_Utilities()
