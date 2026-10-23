@@ -13,8 +13,6 @@ from credentials import Credentials
 
 import os
 
-
-
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 MySQL_Utils = MySQL_Utilities()
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
@@ -50,7 +48,7 @@ def setup_mysql_connection():
     # initiate a MySQL engine to query with
     mysql_connection, mysql_cursor = MySQL_Utils.login_to_mysql(server = mysql_server, database = mysql_database,
                                                                 username = mysql_username, password = mysql_password)
-    return mysql_connection, mysql_cursor
+    yield mysql_connection, mysql_cursor
 
 @pytest.fixture(scope = "session")
 def setup_mssql_connection():
@@ -59,7 +57,7 @@ def setup_mssql_connection():
     mssql_database = Cred.get_database(dbms = mysql_db, env = env)
     # initiate an MS SQL cursor to query with
     mssql_connection, mssql_cursor = MSSQL_Utils.login_to_mssql(mssql_server, mssql_database)
-    return mssql_connection, mssql_cursor
+    yield mssql_connection, mssql_cursor
 
 @pytest.fixture(scope = "session")
 def setup_salesforce_connection():
@@ -69,4 +67,4 @@ def setup_salesforce_connection():
     sf_token = Cred.get_token(sf_database, sf_environment)
     # create a instance of simple_salesforce to query and perform operations against salesforce with
     sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
-    return sf
+    yield sf
