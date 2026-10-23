@@ -101,6 +101,62 @@ def test_contact_tables(setup_mysql_connection, setup_mssql_connection):
     # assert the source table is equal to the target table
     assert_frame_equal(mysql_contact_df, mssql_contact_df)
 
-# def test_contract_tables(setup_mysql_connection, setup_mssql_connection):
-#
-# def test_contract_lines_tables(setup_mysql_connection, setup_mssql_connection):
+def test_contract_tables(setup_mysql_connection, setup_mssql_connection):
+    mssql_select_query = """SELECT
+       [account_number_external_id]
+      ,[contract_number]
+      ,[start_date]
+      ,[end_date]
+  FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts]
+  ORDER BY [account_number_external_id], [contract_number]"""
+
+    mysql_select_query = """SELECT
+       account_number_external_id
+      ,contract_number
+      ,start_date
+      ,end_date
+  FROM data_engineering.contracts
+  ORDER BY account_number_external_id, contract_number"""
+
+    # get mysql connection and cursor to interact with mysql tables
+    mysql_connection, mysql_cursor = setup_mysql_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+
+    # query mysql contract records
+    mysql_contract_df = MySQL_Utils.query_mysql_return_dataframe(mysql_select_query, mysql_connection)
+    # query mssql contract records
+    mssql_contract_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+
+    # assert the source table is equal to the target table
+    assert_frame_equal(mysql_contract_df, mssql_contract_df)
+
+def test_contract_lines_tables(setup_mysql_connection, setup_mssql_connection):
+    mssql_select_query = """SELECT
+       [contract_line_number]
+      ,[contract_number]
+      ,[product]
+      ,[quantity]
+  FROM [Data_Engineering].[dbo].[STG_SOURCE_Contract_Lines]
+  ORDER BY [contract_line_number] ,[contract_number]"""
+
+    mysql_select_query = """SELECT
+       contract_line_number
+      ,contract_number
+      ,product
+      ,quantity
+  FROM data_engineering.contract_lines
+  ORDER BY contract_line_number ,contract_number"""
+
+    # get mysql connection and cursor to interact with mysql tables
+    mysql_connection, mysql_cursor = setup_mysql_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+
+    # query mysql contract records
+    mysql_contract_df = MySQL_Utils.query_mysql_return_dataframe(mysql_select_query, mysql_connection)
+    # query mssql contract records
+    mssql_contract_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+
+    # assert the source table is equal to the target table
+    assert_frame_equal(mysql_contract_df, mssql_contract_df)
