@@ -56,7 +56,7 @@ def setup_mssql_connection():
     mssql_server = Cred.get_server(dbms = mysql_db, env = env)
     mssql_database = Cred.get_database(dbms = mysql_db, env = env)
     # initiate an MS SQL cursor to query with
-    mssql_connection, mssql_cursor = MSSQL_Utils.login_to_mssql(mssql_server, mssql_database)
+    mssql_connection, mssql_cursor = MSSQL_Utils.login_to_mssql(server = mssql_server, database = mssql_database)
     yield mssql_connection, mssql_cursor
 
 @pytest.fixture(scope = "session")
