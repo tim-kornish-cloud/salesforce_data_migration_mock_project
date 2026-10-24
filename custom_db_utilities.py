@@ -60,7 +60,7 @@ class Salesforce_Utilities:
         """
 
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=10))
-    def login_to_salesForce(self, username, password, security_token, environment = ""):
+    def login_to_salesForce(self, username = "", password = "", security_token = "", environment = "", instance_url = None):
         """
         Description: log into a Salesforce or and return salesforce client
                      to operate with.
@@ -70,23 +70,29 @@ class Salesforce_Utilities:
         Password        - string, salesforce Password
         security_token  - string, salesforce token
         environments    - string, used for logger to state which org being logged into
-
+        instance_url    - string, if none use username and passowrd, else call instance with url
         Return: sf      - Salesforce instance to query against
         """
         # try except block
         try:
             # log status to console
             log.info(f"[Logging into source org: {environment}]")
-            # log into salesforce using simple_salesforce
-            sf = Salesforce(username = username,
-                            password = password,
-                            security_token = security_token
-                            )
-            # log to console the login was successful. if not successful,
-            # there will be a error from Salesforce on the console
-            log.info("[Logged in successfully]")
-            # return instance of salesforce to perform operations with
-            return sf
+            if instance_url == None:
+                # log into salesforce using simple_salesforce
+                sf = Salesforce(username = username,
+                                password = password,
+                                security_token = security_token
+                                )
+                # log to console the login was successful. if not successful,
+                # there will be a error from Salesforce on the console
+                log.info("[Logged in successfully]")
+                # return instance of salesforce to perform operations with
+                return sf
+            else:
+                # log into salesforce using simple_salesforce instance_url method
+                sf = Salesforce(instance_url = instance_url)
+                # return instance of salesforce to perform operations with
+                return sf
         # exception block - error logging into salesforce
         except Exception as e:
             # log error when logging into salesforce
