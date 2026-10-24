@@ -140,59 +140,63 @@ def test_migrated_contacts(setup_salesforce_connection, setup_mssql_connection):
     assert_frame_equal(sf_contacts_df, mssql_contact_df)
 
 def test_migrated_opportunities(setup_salesforce_connection, setup_mssql_connection):
-    sf_account_query = """SELECT
+    sf_opportunity_query = """SELECT
+	Name,
 	Account.Account_Number_External_ID__c,
-    FirstName,
-    LastName,
-	Title,
-	Email,
-	Department,
-	Languages__c
-    FROM Contact
-    WHERE Migrated_Record__c = TRUE
-    ORDER BY Account.Account_Number_External_ID__c, LastName, FirstName
+	CloseDate,
+	Opportunity_External_ID__c,
+	Pricebook2Id,
+	StageName
+    FROM Opportunity
+    WHERE Migrated_Record__c = True
+    ORDER BY Account.Account_Number_External_ID__c, Name
     """
 
     mssql_select_query = """SELECT [account_number_external_id]
           ,[contract_number]
           ,[start_date]
-          ,[end_date]
       FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts]
-  ORDER BY [account_number_external_id],[contract_number]"""
+      ORDER BY [account_number_external_id], [contract_number]"""
+
+    sf_pricebook2_query = "SELECT Id, IsStandard, Name FROM Pricebook2 WHERE IsStandard = True"
 
     # set up salesforce connection
     sf = setup_salesforce_connection
     # get mssql connection and cursor to interact with mssql tables
     mssql_connection, mssql_cursor = setup_mssql_connection
-    # query salesforce and return the migrated contacts
-    contact_query_results = SF_Utils.query_salesforce(sf, sf_account_query)
+    # query salesforce and return the migrated opportunities
+    opportunities_query_results = SF_Utils.query_salesforce(sf, sf_opportunity_query)
     # convert query results to a dataframe
-    sf_contacts_df = SF_Utils.load_query_with_lookups_into_dataframe(contact_query_results)
-    # query mssql contact records
-    mssql_contact_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    sf_opportunities_df = SF_Utils.load_query_with_lookups_into_dataframe(opportunities_query_results)
+    # query salesforce and return the migrated pricebook2
+    pricebook2_query_results = SF_Utils.query_salesforce(sf, sf_pricebook2_query)
+    # get pricebook id to add to staged data for comparison
+    sf_pricebook2_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebook2_query_results)
+    # query mssql opportunities records
+    mssql_opportunities_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
     # rename salesforce column names to match mssql column names
-    sf_contacts_df.rename(columns = {"Account.Account_Number_External_ID__c" : "account_number_external_id",
-                                    "FirstName" : "first_name",
-                                	"LastName" : "last_name",
-                                    "Email" : "email",
-                                    "Title" : "title",
-                                	"Department" : "department",
-                                	"Languages__c" : "languages"}, inplace = True)
-    # add english to list of languages each contact knows
-    mssql_contact_df["languages"] = np.where((mssql_contact_df["languages"] == 'English') | (mssql_contact_df["languages"] == 'english'),
-                                           mssql_contact_df["languages"], "English, " + mssql_contact_df["languages"])
-    # only compare the mssql staging contacts with what is loaded into salesforce
-    mssql_contact_df = mssql_contact_df[mssql_contact_df['account_number_external_id'].isin(sf_contacts_df['account_number_external_id'])]
+    mssql_opportunities_df.rename(columns = {"account_number_external_id" : "Account.Account_Number_External_ID__c",
+                                             "contract_number" : "Name",
+                                	         "start_date" : "CloseDate"}, inplace = True)
+    # only compare the mssql staging opportunities with what is loaded into salesforce
+    mssql_opportunities_df = mssql_opportunities_df[mssql_opportunities_df['Name'].isin(sf_opportunities_df['Opportunity_External_ID__c'])]
+    # add pricebook to mssql opportunity dataframe for comparison
+    mssql_opportunities_df["Pricebook2Id"] = sf_pricebook2_df.iloc[0,0]
+    # add stage name to mssql opportunity dataframe for comparison
+    mssql_opportunities_df["StageName"] = "Closed Won"
+    # copy name field to Opportunity_External_ID__c
+    mssql_opportunities_df["Opportunity_External_ID__c"] = mssql_opportunities_df["Name"]
     # sort columns in both dataframes to have same order
-    sf_contacts_df = sf_contacts_df[sorted(sf_contacts_df.columns)]
-    mssql_contact_df = mssql_contact_df[sorted(mssql_contact_df.columns)]
+    sf_opportunities_df = sf_opportunities_df[sorted(sf_opportunities_df.columns)]
+    mssql_opportunities_df = mssql_opportunities_df[sorted(mssql_opportunities_df.columns)]
     # convert mssql column datatypes to be the same as salesforce datatypes
-    mssql_contact_df = mssql_contact_df.astype(sf_contacts_df.dtypes)
+    mssql_opportunities_df = mssql_opportunities_df.astype(sf_opportunities_df.dtypes)
     # reset index for comparison
-    sf_contacts_df.reset_index(drop=True, inplace = True)
-    mssql_contact_df.reset_index(drop=True, inplace = True)
+    sf_opportunities_df.reset_index(drop=True, inplace = True)
+    mssql_opportunities_df.reset_index(drop=True, inplace = True)
+
     # assert the source table is equal to the target table
-    assert_frame_equal(sf_contacts_df, mssql_contact_df)
+    assert_frame_equal(sf_opportunities_df, mssql_opportunities_df)
 
 # def test_migrated_quotes(setup_salesforce_connection, setup_mssql_connection):
 #     pass
