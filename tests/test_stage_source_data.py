@@ -17,7 +17,6 @@ MySQL_Utils = MySQL_Utilities()
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 MSSQL_Utils = MSSQL_Utilities()
 
-
 def test_account_tables(setup_mysql_connection, setup_mssql_connection):
     mssql_select_query = """SELECT
            [phone]
