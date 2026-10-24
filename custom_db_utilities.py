@@ -16,10 +16,13 @@ import time
 import logging as log
 import coloredlogs
 import json
+import sys
 # pandas and numpy
 import numpy as np
 import pandas as pd
 from pandas.io import sql
+# tenacity for retry salesforce login, since the request times out a lot
+from tenacity import retry, stop_after_attempt, wait_exponential
 # salesforce connector
 from simple_salesforce import Salesforce
 # MSSQL connector
@@ -56,6 +59,7 @@ class Salesforce_Utilities:
            can add login credentials as instance variables to utilize in functions
         """
 
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=10))
     def login_to_salesForce(self, username, password, security_token, environment = ""):
         """
         Description: log into a Salesforce or and return salesforce client
@@ -87,7 +91,8 @@ class Salesforce_Utilities:
         except Exception as e:
             # log error when logging into salesforce
             log.exception(f"[Error logging into source org: {environment}...{e}]")
-
+            # exit script since login failed
+            sys.exit()
     def query_salesforce(self, sf, query, include_deleted = False):
         """
         Description: upload a SOQL query to salesforce and return
