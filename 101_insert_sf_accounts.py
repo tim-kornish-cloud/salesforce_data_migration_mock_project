@@ -49,11 +49,11 @@ connection, cursor = MSSQL_Utils.login_to_mssql(server = Cred.get_server(), data
 
 # select accounts to match against the csv to not attempt to insert duplicates
 select_query = f"""SELECT DISTINCT TOP {size} [Acc].[account_number_external_id]
-       [phone]
+      [account_number_external_id]
+      ,[phone]
       ,[company_name]
       ,[industry]
       ,[annual_revenue]
-      ,[Acc].[account_number_external_id]
       ,[number_of_locations]
       ,[number_of_employees]
       ,[sla]
