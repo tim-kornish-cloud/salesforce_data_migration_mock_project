@@ -12,9 +12,9 @@ from pandas.testing import assert_frame_equal
 from tests.conftest import setup_mysql_connection, setup_mssql_connection
 from custom_db_utilities import MSSQL_Utilities, MySQL_Utilities
 
-# create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with MySQL
 MySQL_Utils = MySQL_Utilities()
-# create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with MSSQL
 MSSQL_Utils = MSSQL_Utilities()
 
 def test_account_tables(setup_mysql_connection, setup_mssql_connection):
