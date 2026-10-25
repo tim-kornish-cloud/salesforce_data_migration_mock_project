@@ -13,7 +13,7 @@ from pandas.testing import assert_frame_equal
 from tests.conftest import setup_salesforce_connection, setup_mssql_connection
 from custom_db_utilities import MSSQL_Utilities, Salesforce_Utilities, Custom_Utilities
 
-# create and instance of the custom salesforce utilities class used to interact with Salesforce
+# create and instance of the custom salesforce utilities class used to interact with MSSQL
 MSSQL_Utils = MSSQL_Utilities()
 # create and instance of the custom salesforce utilities class used to interact with Salesforce
 SF_Utils = Salesforce_Utilities()
@@ -190,7 +190,7 @@ def test_migrated_opportunities(setup_salesforce_connection, setup_mssql_connect
     sf_pricebook2_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebook2_query_results)
     # query mssql opportunities records
     mssql_opportunities_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
-    # rename salesforce column names to match mssql column names
+    # rename mssql column names to match salesforce column names
     mssql_opportunities_df.rename(columns = {"account_number_external_id" : "Account.Account_Number_External_ID__c",
                                              "contract_number" : "Name",
                                 	         "start_date" : "CloseDate"}, inplace = True)
@@ -210,7 +210,6 @@ def test_migrated_opportunities(setup_salesforce_connection, setup_mssql_connect
     # reset index for comparison
     sf_opportunities_df.reset_index(drop=True, inplace = True)
     mssql_opportunities_df.reset_index(drop=True, inplace = True)
-
     # assert the source table is equal to the target table
     assert_frame_equal(sf_opportunities_df, mssql_opportunities_df)
 
@@ -220,12 +219,10 @@ def test_migrated_quotes_before_update(setup_salesforce_connection, setup_mssql_
     running after updates will change the data and cause a failure.
     """
     sf_quote_query = """SELECT
-	Name,
 	Quote_External_ID__c,
 	SBQQ__Account__r.Account_Number_External_ID__c,
 	SBQQ__ContractingMethod__c,
 	SBQQ__EndDate__c,
-	SBQQ__LineItemCount__c,
 	SBQQ__Opportunity2__r.Opportunity_External_ID__c,
 	SBQQ__Ordered__c,
 	SBQQ__PriceBook__c,
@@ -236,7 +233,7 @@ def test_migrated_quotes_before_update(setup_salesforce_connection, setup_mssql_
 	SBQQ__Type__c
     FROM SBQQ__Quote__c
     WHERE Migrated_Record__c = True
-    ORDER BY Account.Account_Number_External_ID__c, Quote_External_ID__c
+    ORDER BY SBQQ__Account__r.Account_Number_External_ID__c, Quote_External_ID__c
     """
 
     mssql_select_query = """SELECT [account_number_external_id]
@@ -252,39 +249,49 @@ def test_migrated_quotes_before_update(setup_salesforce_connection, setup_mssql_
     sf = setup_salesforce_connection
     # get mssql connection and cursor to interact with mssql tables
     mssql_connection, mssql_cursor = setup_mssql_connection
-    # query salesforce and return the migrated opportunities
-    opportunities_query_results = SF_Utils.query_salesforce(sf, sf_opportunity_query)
+    # query salesforce and return the migrated quote
+    quote_query_results = SF_Utils.query_salesforce(sf, sf_quote_query)
     # convert query results to a dataframe
-    sf_opportunities_df = SF_Utils.load_query_with_lookups_into_dataframe(opportunities_query_results)
+    sf_quote_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_query_results)
     # query salesforce and return the migrated pricebook2
     pricebook2_query_results = SF_Utils.query_salesforce(sf, sf_pricebook2_query)
     # get pricebook id to add to staged data for comparison
     sf_pricebook2_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebook2_query_results)
-    # query mssql opportunities records
-    mssql_opportunities_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
-    # rename salesforce column names to match mssql column names
-    mssql_opportunities_df.rename(columns = {"account_number_external_id" : "Account.Account_Number_External_ID__c",
-                                             "contract_number" : "Name",
-                                	         "start_date" : "CloseDate"}, inplace = True)
-    # only compare the mssql staging opportunities with what is loaded into salesforce
-    mssql_opportunities_df = mssql_opportunities_df[mssql_opportunities_df['Name'].isin(sf_opportunities_df['Opportunity_External_ID__c'])]
-    # add pricebook to mssql opportunity dataframe for comparison
-    mssql_opportunities_df["Pricebook2Id"] = sf_pricebook2_df.iloc[0,0]
-    # add stage name to mssql opportunity dataframe for comparison
-    mssql_opportunities_df["StageName"] = "Closed Won"
+    # query mssql quote records
+    mssql_quote_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    # rename mssql column names to match salesforce column names
+    mssql_quote_df.rename(columns = {"account_number_external_id" : "SBQQ__Account__r.Account_Number_External_ID__c",
+                                             "contract_number" : "Quote_External_ID__c",
+                                	         "start_date" : "SBQQ__StartDate__c",
+                                             "end_date" : "SBQQ__EndDate__c"}, inplace = True)
+    # only compare the mssql staging quotes with what is loaded into salesforce
+    mssql_quote_df = mssql_quote_df[mssql_quote_df['Quote_External_ID__c'].isin(sf_quote_df['Quote_External_ID__c'])]
+    # add pricebook to mssql quote dataframe for comparison
+    mssql_quote_df["SBQQ__PriceBook__c"] = sf_pricebook2_df.iloc[0,0]
+    # set contracting method, stays the same after update
+    mssql_quote_df["SBQQ__ContractingMethod__c"] = "By Subscription End Date"
+    # set ordered to false, will be true in after update test
+    mssql_quote_df["SBQQ__Ordered__c"] = False
+    # set primary to false, will be true in after update test
+    mssql_quote_df["SBQQ__Primary__c"] = False
+    # set status to draft, will be Accepted after update test
+    mssql_quote_df["SBQQ__Status__c"] = "Draft"
+    # set subscription term of contract to 12, will stay same after update
+    mssql_quote_df["SBQQ__SubscriptionTerm__c"] = 12
+    # set quote type to quote, will stay the same after update
+    mssql_quote_df["SBQQ__Type__c"] = "Quote"
     # copy name field to Opportunity_External_ID__c
-    mssql_opportunities_df["Opportunity_External_ID__c"] = mssql_opportunities_df["Name"]
+    mssql_quote_df["SBQQ__Opportunity2__r.Opportunity_External_ID__c"] = mssql_quote_df["Quote_External_ID__c"]
     # sort columns in both dataframes to have same order
-    sf_opportunities_df = sf_opportunities_df[sorted(sf_opportunities_df.columns)]
-    mssql_opportunities_df = mssql_opportunities_df[sorted(mssql_opportunities_df.columns)]
+    sf_quote_df = sf_quote_df[sorted(sf_quote_df.columns)]
+    mssql_quote_df = mssql_quote_df[sorted(mssql_quote_df.columns)]
     # convert mssql column datatypes to be the same as salesforce datatypes
-    mssql_opportunities_df = mssql_opportunities_df.astype(sf_opportunities_df.dtypes)
+    mssql_quote_df = mssql_quote_df.astype(sf_quote_df.dtypes)
     # reset index for comparison
-    sf_opportunities_df.reset_index(drop=True, inplace = True)
-    mssql_opportunities_df.reset_index(drop=True, inplace = True)
-
+    sf_quote_df.reset_index(drop=True, inplace = True)
+    mssql_quote_df.reset_index(drop=True, inplace = True)
     # assert the source table is equal to the target table
-    assert_frame_equal(sf_opportunities_df, mssql_opportunities_df)
+    assert_frame_equal(sf_quote_df, mssql_quote_df)
 
 # def test_migrated_quote_lines_before_update(setup_salesforce_connection, setup_mssql_connection):
 #     pass
