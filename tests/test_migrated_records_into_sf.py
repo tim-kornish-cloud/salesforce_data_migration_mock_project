@@ -23,6 +23,10 @@ Utils = Custom_Utilities()
 pd.set_option('display.max_columns', None)
 
 def test_migrated_accounts(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the account is migrated into Salesforce.
+    This test can be run immediately after the accounts migration or after the entire
+    end to end migration process.
+    """
     sf_account_query = """SELECT
 	Account_Number_External_ID__c,
     Phone,
@@ -81,6 +85,10 @@ def test_migrated_accounts(setup_salesforce_connection, setup_mssql_connection):
     assert_frame_equal(sf_accounts_df.reset_index(drop=True), mssql_account_df.reset_index(drop=True))
 
 def test_migrated_contacts(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the contact is migrated into Salesforce.
+    This test can be run immediately after the contacts migration or after the entire
+    end to end migration process.
+    """
     sf_contact_query = """SELECT
 	Account.Account_Number_External_ID__c,
     FirstName,
@@ -140,6 +148,14 @@ def test_migrated_contacts(setup_salesforce_connection, setup_mssql_connection):
     assert_frame_equal(sf_contacts_df, mssql_contact_df)
 
 def test_migrated_opportunities(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the opportunity is migrated into Salesforce.
+    This test can be run immediately after the opportunities migration or after the entire
+    end to end migration process.
+
+    This test does not confirm the primary checkbox on the related quote is checked.
+    confirming the proper quote is related requires an update to the validation and
+    could only be run after quotes are migrated and calcualted.
+    """
     sf_opportunity_query = """SELECT
 	Name,
 	Account.Account_Number_External_ID__c,
@@ -198,10 +214,79 @@ def test_migrated_opportunities(setup_salesforce_connection, setup_mssql_connect
     # assert the source table is equal to the target table
     assert_frame_equal(sf_opportunities_df, mssql_opportunities_df)
 
-# def test_migrated_quotes(setup_salesforce_connection, setup_mssql_connection):
-#     pass
-#
-# def test_migrated_quote_lines(setup_salesforce_connection, setup_mssql_connection):
+def test_migrated_quotes_before_update(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the quote is migrated into Salesforce.
+    This test can only be run immediately after the quote migration on insert,
+    running after updates will change the data and cause a failure.
+    """
+    sf_quote_query = """SELECT
+	Name,
+	Quote_External_ID__c,
+	SBQQ__Account__r.Account_Number_External_ID__c,
+	SBQQ__ContractingMethod__c,
+	SBQQ__EndDate__c,
+	SBQQ__LineItemCount__c,
+	SBQQ__Opportunity2__r.Opportunity_External_ID__c,
+	SBQQ__Ordered__c,
+	SBQQ__PriceBook__c,
+	SBQQ__Primary__c,
+	SBQQ__StartDate__c,
+	SBQQ__Status__c,
+	SBQQ__SubscriptionTerm__c,
+	SBQQ__Type__c
+    FROM SBQQ__Quote__c
+    WHERE Migrated_Record__c = True
+    ORDER BY Account.Account_Number_External_ID__c, Quote_External_ID__c
+    """
+
+    mssql_select_query = """SELECT [account_number_external_id]
+          ,[contract_number]
+          ,[start_date]
+          ,[end_date]
+      FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts]
+      ORDER BY [account_number_external_id], [contract_number]"""
+
+    sf_pricebook2_query = "SELECT Id, IsStandard, Name FROM Pricebook2 WHERE IsStandard = True"
+
+    # set up salesforce connection
+    sf = setup_salesforce_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+    # query salesforce and return the migrated opportunities
+    opportunities_query_results = SF_Utils.query_salesforce(sf, sf_opportunity_query)
+    # convert query results to a dataframe
+    sf_opportunities_df = SF_Utils.load_query_with_lookups_into_dataframe(opportunities_query_results)
+    # query salesforce and return the migrated pricebook2
+    pricebook2_query_results = SF_Utils.query_salesforce(sf, sf_pricebook2_query)
+    # get pricebook id to add to staged data for comparison
+    sf_pricebook2_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebook2_query_results)
+    # query mssql opportunities records
+    mssql_opportunities_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    # rename salesforce column names to match mssql column names
+    mssql_opportunities_df.rename(columns = {"account_number_external_id" : "Account.Account_Number_External_ID__c",
+                                             "contract_number" : "Name",
+                                	         "start_date" : "CloseDate"}, inplace = True)
+    # only compare the mssql staging opportunities with what is loaded into salesforce
+    mssql_opportunities_df = mssql_opportunities_df[mssql_opportunities_df['Name'].isin(sf_opportunities_df['Opportunity_External_ID__c'])]
+    # add pricebook to mssql opportunity dataframe for comparison
+    mssql_opportunities_df["Pricebook2Id"] = sf_pricebook2_df.iloc[0,0]
+    # add stage name to mssql opportunity dataframe for comparison
+    mssql_opportunities_df["StageName"] = "Closed Won"
+    # copy name field to Opportunity_External_ID__c
+    mssql_opportunities_df["Opportunity_External_ID__c"] = mssql_opportunities_df["Name"]
+    # sort columns in both dataframes to have same order
+    sf_opportunities_df = sf_opportunities_df[sorted(sf_opportunities_df.columns)]
+    mssql_opportunities_df = mssql_opportunities_df[sorted(mssql_opportunities_df.columns)]
+    # convert mssql column datatypes to be the same as salesforce datatypes
+    mssql_opportunities_df = mssql_opportunities_df.astype(sf_opportunities_df.dtypes)
+    # reset index for comparison
+    sf_opportunities_df.reset_index(drop=True, inplace = True)
+    mssql_opportunities_df.reset_index(drop=True, inplace = True)
+
+    # assert the source table is equal to the target table
+    assert_frame_equal(sf_opportunities_df, mssql_opportunities_df)
+
+# def test_migrated_quote_lines_before_update(setup_salesforce_connection, setup_mssql_connection):
 #     pass
 #
 # def test_migrated_orders(setup_salesforce_connection, setup_mssql_connection):
