@@ -130,7 +130,7 @@ These tests verify the following:
  - the data value in each field per object type
  - The number of records migrated into each object type
 
-The script holds 4 functions for verifying:
+The script holds 11 functions for verifying:
 - Accounts  
   - test_migrated_accounts
 - Contacts
