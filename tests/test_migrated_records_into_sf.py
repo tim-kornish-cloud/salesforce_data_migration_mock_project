@@ -214,7 +214,7 @@ def test_migrated_opportunities(setup_salesforce_connection, setup_mssql_connect
     assert_frame_equal(sf_opportunities_df, mssql_opportunities_df)
 
 def test_migrated_quotes_before_update(setup_salesforce_connection, setup_mssql_connection):
-    """Description: run this test after the quote is migrated into Salesforce.
+    """Description: run this test after the quotes are migrated into Salesforce.
     This test can only be run immediately after the quote migration on insert,
     running after updates will change the data and cause a failure.
     """
@@ -293,17 +293,300 @@ def test_migrated_quotes_before_update(setup_salesforce_connection, setup_mssql_
     # assert the source table is equal to the target table
     assert_frame_equal(sf_quote_df, mssql_quote_df)
 
-# def test_migrated_quote_lines_before_update(setup_salesforce_connection, setup_mssql_connection):
+def test_migrated_quote_lines_before_update(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the quote lines are migrated into Salesforce.
+    This test can only be run immediately after the quote migration on insert,
+    running after updates will change the data and cause a failure.
+    """
+    sf_quote_lines_query = """SELECT
+    QuoteLine_External_ID__c,
+	SBQQ__EndDate__c,
+	SBQQ__ListPrice__c,
+	SBQQ__Number__c,
+	SBQQ__PricingMethod__c,
+	SBQQ__Product__r.Name,
+	SBQQ__Quote__r.Quote_External_ID__c,
+    SBQQ__Quantity__c,
+	SBQQ__StartDate__c,
+	SBQQ__SubscriptionPricing__c,
+	SBQQ__SubscriptionTerm__c,
+	SBQQ__UnitCost__c
+    FROM SBQQ__QuoteLine__c
+    WHERE Migrated_Record__c = True
+    ORDER BY SBQQ__Quote__r.Quote_External_ID__c, QuoteLine_External_ID__c
+    """
+
+    mssql_select_query = """SELECT
+           [CON].[contract_number]
+          ,[contract_line_number]
+          ,[start_date]
+          ,[end_date]
+          ,[product]
+          ,[quantity]
+      FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts] AS CON
+      INNER JOIN [Data_Engineering].[dbo].[STG_SOURCE_Contract_Lines] AS CON_LINE on [CON].[contract_number] =  [CON_LINE].[contract_number]
+      ORDER BY [CON].[contract_number], [CON_LINE].[contract_line_number]"""
+
+    pricebookentry_query = "SELECT Product2.Name, UnitPrice FROM PricebookEntry WHERE PriceBook2.IsStandard = True"
+
+    # set up salesforce connection
+    sf = setup_salesforce_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+    # query salesforce and return the migrated quote
+    quote_lines_query_results = SF_Utils.query_salesforce(sf, sf_quote_lines_query)
+    # convert query results to a dataframe
+    sf_quote_lines_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_lines_query_results)
+    # query salesforce and return the Pricebook entries
+    pricebookentry_query_results = SF_Utils.query_salesforce(sf, pricebookentry_query)
+    # convert query results to a dataframe
+    sf_pricebookentry_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebookentry_query_results)
+    # query mssql quote records
+    mssql_quote_lines_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    # rename mssql column names to match salesforce column names
+    mssql_quote_lines_df.rename(columns = {"contract_number" : "SBQQ__Quote__r.Quote_External_ID__c",
+                                           "contract_line_number" : "QuoteLine_External_ID__c",
+                                	       "start_date" : "SBQQ__StartDate__c",
+                                           "end_date" : "SBQQ__EndDate__c",
+                                           "product" : "SBQQ__Product__r.Name",
+                                           "quantity" : "SBQQ__Quantity__c"}, inplace = True)
+    # only compare the mssql staging quotes with what is loaded into salesforce
+    mssql_quote_lines_df = mssql_quote_lines_df[mssql_quote_lines_df['QuoteLine_External_ID__c'].isin(sf_quote_lines_df['QuoteLine_External_ID__c'])]
+    # product mapping from source product name to salesforce product name
+    product_mapping  = {"diesel-large" : "GenWatt Diesel 1000kW",
+                        "diesel-low" : "GenWatt Diesel 10kW",
+                        "diesel-medium" : "GenWatt Diesel 200kW",
+                        "gasoline-large" : "GenWatt Gasoline 2000kW",
+                        "gasoline-low" : "GenWatt Gasoline 300kW",
+                        "gasoline-medium" : "GenWatt Gasoline 750kW",
+                        "install - high" : "Installation: Industrial - High",
+                        "install - low" : "Installation: Industrial - Low",
+                        "install - medium" : "Installation: Industrial - Medium",
+                        "install - portable" : "Installation: Portable",
+                        "propane-large" : "GenWatt Propane 1500kW",
+                        "propane-low" : "GenWatt Propane 100kW",
+                        "propane-medium" : "GenWatt Propane 500kW",
+                        "sla - Bronze" : "SLA: Bronze",
+                        "sla - Gold" : "SLA: Gold",
+                        "sla - Platinum" : "SLA: Platinum",
+                        "sla - Silver" : "SLA: Silver"}
+    # replace products in df with mapped values
+    mssql_quote_lines_df["SBQQ__Product__r.Name"] = mssql_quote_lines_df["SBQQ__Product__r.Name"].replace(product_mapping)
+    # merge mssql contract lines with pricebook entries to get unit cose and list price which are the same value called: UnitPrice
+    mssql_quote_lines_df = Utils.merge_dfs(left = mssql_quote_lines_df, right = sf_pricebookentry_df, left_on = "SBQQ__Product__r.Name", right_on = "Product2.Name", how = "inner", indicator = False)
+    # set SBQQ__Number__c based on product type
+    mssql_quote_lines_df["SBQQ__Number__c"] = np.where(mssql_quote_lines_df['SBQQ__Product__r.Name'].str.contains('GenWatt'), 1,
+                                                       np.where(mssql_quote_lines_df['SBQQ__Product__r.Name'].str.contains('SLA'), 2, 3))
+    # add static or salesforce pricebook entry values to match migrated quote line values
+    mssql_quote_lines_df["SBQQ__ListPrice__c"] = mssql_quote_lines_df["UnitPrice"]
+    mssql_quote_lines_df["SBQQ__PricingMethod__c"] = "List"
+    mssql_quote_lines_df["SBQQ__SubscriptionPricing__c"] = "Fixed Price"
+    mssql_quote_lines_df["SBQQ__SubscriptionTerm__c"] = 12
+    mssql_quote_lines_df["SBQQ__UnitCost__c"] = mssql_quote_lines_df["UnitPrice"]
+    # drop extra columns from merge with pricebook entries
+    mssql_quote_lines_df.drop(["Product2.Name", "UnitPrice"], axis = 1, inplace = True)
+    # sort columns in both dataframes to have same order
+    sf_quote_lines_df = sf_quote_lines_df[sorted(sf_quote_lines_df.columns)]
+    mssql_quote_lines_df = mssql_quote_lines_df[sorted(mssql_quote_lines_df.columns)]
+    # convert mssql column datatypes to be the same as salesforce datatypes
+    mssql_quote_lines_df = mssql_quote_lines_df.astype(sf_quote_lines_df.dtypes)
+    # reset index for comparison
+    sf_quote_lines_df.reset_index(drop=True, inplace = True)
+    mssql_quote_lines_df.reset_index(drop=True, inplace = True)
+    # assert the source table is equal to the target table
+    assert_frame_equal(sf_quote_lines_df, mssql_quote_lines_df)
+
+def test_migrated_quotes_after_update(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the quotes are migrated into Salesforce.
+    This test can only be run immediately after the quote migration is updated.
+    Running before updates will cause a failure.
+    """
+    sf_quote_query = """SELECT
+	Quote_External_ID__c,
+	SBQQ__Account__r.Account_Number_External_ID__c,
+	SBQQ__ContractingMethod__c,
+	SBQQ__EndDate__c,
+	SBQQ__Opportunity2__r.Opportunity_External_ID__c,
+	SBQQ__Ordered__c,
+	SBQQ__PriceBook__c,
+	SBQQ__Primary__c,
+	SBQQ__StartDate__c,
+	SBQQ__Status__c,
+	SBQQ__SubscriptionTerm__c,
+	SBQQ__Type__c
+    FROM SBQQ__Quote__c
+    WHERE Migrated_Record__c = True
+    ORDER BY SBQQ__Account__r.Account_Number_External_ID__c, Quote_External_ID__c
+    """
+
+    mssql_select_query = """SELECT [account_number_external_id]
+          ,[contract_number]
+          ,[start_date]
+          ,[end_date]
+      FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts]
+      ORDER BY [account_number_external_id], [contract_number]"""
+
+    sf_pricebook2_query = "SELECT Id, IsStandard, Name FROM Pricebook2 WHERE IsStandard = True"
+
+    # set up salesforce connection
+    sf = setup_salesforce_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+    # query salesforce and return the migrated quote
+    quote_query_results = SF_Utils.query_salesforce(sf, sf_quote_query)
+    # convert query results to a dataframe
+    sf_quote_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_query_results)
+    # query salesforce and return the migrated pricebook2
+    pricebook2_query_results = SF_Utils.query_salesforce(sf, sf_pricebook2_query)
+    # get pricebook id to add to staged data for comparison
+    sf_pricebook2_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebook2_query_results)
+    # query mssql quote records
+    mssql_quote_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    # rename mssql column names to match salesforce column names
+    mssql_quote_df.rename(columns = {"account_number_external_id" : "SBQQ__Account__r.Account_Number_External_ID__c",
+                                             "contract_number" : "Quote_External_ID__c",
+                                	         "start_date" : "SBQQ__StartDate__c",
+                                             "end_date" : "SBQQ__EndDate__c"}, inplace = True)
+    # only compare the mssql staging quotes with what is loaded into salesforce
+    mssql_quote_df = mssql_quote_df[mssql_quote_df['Quote_External_ID__c'].isin(sf_quote_df['Quote_External_ID__c'])]
+    # add pricebook to mssql quote dataframe for comparison
+    mssql_quote_df["SBQQ__PriceBook__c"] = sf_pricebook2_df.iloc[0,0]
+    # set contracting method, stays the same after update
+    mssql_quote_df["SBQQ__ContractingMethod__c"] = "By Subscription End Date"
+    # set ordered to false, will be true in after update test
+    mssql_quote_df["SBQQ__Ordered__c"] = True
+    # set primary to false, will be true in after update test
+    mssql_quote_df["SBQQ__Primary__c"] = True
+    # set status to draft, will be Accepted after update test
+    mssql_quote_df["SBQQ__Status__c"] = "Accepted"
+    # set subscription term of contract to 12, will stay same after update
+    mssql_quote_df["SBQQ__SubscriptionTerm__c"] = 12
+    # set quote type to quote, will stay the same after update
+    mssql_quote_df["SBQQ__Type__c"] = "Quote"
+    # copy name field to Opportunity_External_ID__c
+    mssql_quote_df["SBQQ__Opportunity2__r.Opportunity_External_ID__c"] = mssql_quote_df["Quote_External_ID__c"]
+    # sort columns in both dataframes to have same order
+    sf_quote_df = sf_quote_df[sorted(sf_quote_df.columns)]
+    mssql_quote_df = mssql_quote_df[sorted(mssql_quote_df.columns)]
+    # convert mssql column datatypes to be the same as salesforce datatypes
+    mssql_quote_df = mssql_quote_df.astype(sf_quote_df.dtypes)
+    # reset index for comparison
+    sf_quote_df.reset_index(drop=True, inplace = True)
+    mssql_quote_df.reset_index(drop=True, inplace = True)
+    # assert the source table is equal to the target table
+    assert_frame_equal(sf_quote_df, mssql_quote_df)
+
+def test_migrated_quote_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the quote lines are migrated into Salesforce.
+    This test can only be run immediately after the quote lines migration are updated.
+    Running before updates will cause a failure.
+    """
+    sf_quote_lines_query = """SELECT
+    QuoteLine_External_ID__c,
+	SBQQ__EndDate__c,
+	SBQQ__ListPrice__c,
+	SBQQ__Number__c,
+	SBQQ__PricingMethod__c,
+	SBQQ__Product__r.Name,
+	SBQQ__Quote__r.Quote_External_ID__c,
+    SBQQ__Quantity__c,
+	SBQQ__StartDate__c,
+	SBQQ__SubscriptionPricing__c,
+	SBQQ__SubscriptionTerm__c,
+	SBQQ__UnitCost__c
+    FROM SBQQ__QuoteLine__c
+    WHERE Migrated_Record__c = True
+    ORDER BY SBQQ__Quote__r.Quote_External_ID__c, QuoteLine_External_ID__c
+    """
+
+    mssql_select_query = """SELECT
+           [CON].[contract_number]
+          ,[contract_line_number]
+          ,[start_date]
+          ,[end_date]
+          ,[product]
+          ,[quantity]
+      FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts] AS CON
+      INNER JOIN [Data_Engineering].[dbo].[STG_SOURCE_Contract_Lines] AS CON_LINE on [CON].[contract_number] =  [CON_LINE].[contract_number]
+      ORDER BY [CON].[contract_number], [CON_LINE].[contract_line_number]"""
+
+    pricebookentry_query = "SELECT Product2.Name, UnitPrice FROM PricebookEntry WHERE PriceBook2.IsStandard = True"
+
+    # set up salesforce connection
+    sf = setup_salesforce_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+    # query salesforce and return the migrated quote
+    quote_lines_query_results = SF_Utils.query_salesforce(sf, sf_quote_lines_query)
+    # convert query results to a dataframe
+    sf_quote_lines_df = SF_Utils.load_query_with_lookups_into_dataframe(quote_lines_query_results)
+    # query salesforce and return the Pricebook entries
+    pricebookentry_query_results = SF_Utils.query_salesforce(sf, pricebookentry_query)
+    # convert query results to a dataframe
+    sf_pricebookentry_df = SF_Utils.load_query_with_lookups_into_dataframe(pricebookentry_query_results)
+    # query mssql quote records
+    mssql_quote_lines_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    # rename mssql column names to match salesforce column names
+    mssql_quote_lines_df.rename(columns = {"contract_number" : "SBQQ__Quote__r.Quote_External_ID__c",
+                                           "contract_line_number" : "QuoteLine_External_ID__c",
+                                	       "start_date" : "SBQQ__StartDate__c",
+                                           "end_date" : "SBQQ__EndDate__c",
+                                           "product" : "SBQQ__Product__r.Name",
+                                           "quantity" : "SBQQ__Quantity__c"}, inplace = True)
+    # only compare the mssql staging quotes with what is loaded into salesforce
+    mssql_quote_lines_df = mssql_quote_lines_df[mssql_quote_lines_df['QuoteLine_External_ID__c'].isin(sf_quote_lines_df['QuoteLine_External_ID__c'])]
+    # product mapping from source product name to salesforce product name
+    product_mapping  = {"diesel-large" : "GenWatt Diesel 1000kW",
+                        "diesel-low" : "GenWatt Diesel 10kW",
+                        "diesel-medium" : "GenWatt Diesel 200kW",
+                        "gasoline-large" : "GenWatt Gasoline 2000kW",
+                        "gasoline-low" : "GenWatt Gasoline 300kW",
+                        "gasoline-medium" : "GenWatt Gasoline 750kW",
+                        "install - high" : "Installation: Industrial - High",
+                        "install - low" : "Installation: Industrial - Low",
+                        "install - medium" : "Installation: Industrial - Medium",
+                        "install - portable" : "Installation: Portable",
+                        "propane-large" : "GenWatt Propane 1500kW",
+                        "propane-low" : "GenWatt Propane 100kW",
+                        "propane-medium" : "GenWatt Propane 500kW",
+                        "sla - Bronze" : "SLA: Bronze",
+                        "sla - Gold" : "SLA: Gold",
+                        "sla - Platinum" : "SLA: Platinum",
+                        "sla - Silver" : "SLA: Silver"}
+    # replace products in df with mapped values
+    mssql_quote_lines_df["SBQQ__Product__r.Name"] = mssql_quote_lines_df["SBQQ__Product__r.Name"].replace(product_mapping)
+    # merge mssql contract lines with pricebook entries to get unit cose and list price which are the same value called: UnitPrice
+    mssql_quote_lines_df = Utils.merge_dfs(left = mssql_quote_lines_df, right = sf_pricebookentry_df, left_on = "SBQQ__Product__r.Name", right_on = "Product2.Name", how = "inner", indicator = False)
+    # set SBQQ__Number__c based on product type
+    mssql_quote_lines_df["SBQQ__Number__c"] = np.where(mssql_quote_lines_df['SBQQ__Product__r.Name'].str.contains('GenWatt'), 1,
+                                                       np.where(mssql_quote_lines_df['SBQQ__Product__r.Name'].str.contains('SLA'), 2, 3))
+    # add static or salesforce pricebook entry values to match migrated quote line values
+    mssql_quote_lines_df["SBQQ__ListPrice__c"] = mssql_quote_lines_df["UnitPrice"]
+    mssql_quote_lines_df["SBQQ__PricingMethod__c"] = "List"
+    mssql_quote_lines_df["SBQQ__SubscriptionPricing__c"] = "Fixed Price"
+    mssql_quote_lines_df["SBQQ__SubscriptionTerm__c"] = 12
+    mssql_quote_lines_df["SBQQ__UnitCost__c"] = mssql_quote_lines_df["UnitPrice"]
+    # drop extra columns from merge with pricebook entries
+    mssql_quote_lines_df.drop(["Product2.Name", "UnitPrice"], axis = 1, inplace = True)
+    # sort columns in both dataframes to have same order
+    sf_quote_lines_df = sf_quote_lines_df[sorted(sf_quote_lines_df.columns)]
+    mssql_quote_lines_df = mssql_quote_lines_df[sorted(mssql_quote_lines_df.columns)]
+    # convert mssql column datatypes to be the same as salesforce datatypes
+    mssql_quote_lines_df = mssql_quote_lines_df.astype(sf_quote_lines_df.dtypes)
+    # reset index for comparison
+    sf_quote_lines_df.reset_index(drop=True, inplace = True)
+    mssql_quote_lines_df.reset_index(drop=True, inplace = True)
+    # assert the source table is equal to the target table
+    assert_frame_equal(sf_quote_lines_df, mssql_quote_lines_df)
+
+def test_migrated_orders_after_update(setup_salesforce_connection, setup_mssql_connection):
+    pass
+
+# def test_migrated_order_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
 #     pass
 #
-# def test_migrated_orders(setup_salesforce_connection, setup_mssql_connection):
+# def test_migrated_contracts_after_update(setup_salesforce_connection, setup_mssql_connection):
 #     pass
 #
-# def test_migrated_order_lines(setup_salesforce_connection, setup_mssql_connection):
-#     pass
-#
-# def test_migrated_contracts(setup_salesforce_connection, setup_mssql_connection):
-#     pass
-#
-# def test_migrated_contract_lines(setup_salesforce_connection, setup_mssql_connection):
+# def test_migrated_contract_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
 #     pass
