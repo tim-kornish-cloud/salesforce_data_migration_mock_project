@@ -592,6 +592,7 @@ def test_migrated_orders_after_update(setup_salesforce_connection, setup_mssql_c
 	SBQQ__Quote__r.Quote_External_ID__c,
 	Status
     FROM Order
+    WHERE SBQQ__Quote__r.Migrated_Record__c = TRUE
     ORDER BY Account.Account_Number_External_ID__c, SBQQ__Quote__r.Quote_External_ID__c
     """
 
@@ -716,8 +717,133 @@ def test_migrated_order_lines_after_update(setup_salesforce_connection, setup_ms
     # assert the source table is equal to the target table
     assert_frame_equal(sf_order_lines_df, mssql_order_lines_df)
 
-# def test_migrated_contracts_after_update(setup_salesforce_connection, setup_mssql_connection):
-#     pass
-#
-# def test_migrated_contract_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
-#     pass
+def test_migrated_contracts_after_update(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the migrated contracts are activated.
+    This test can only be run after the contracts are updated.
+    Running before update will cause a failure.
+    """
+    sf_contract_query = """SELECT
+	EndDate,
+	SBQQ__Order__r.Account.Account_Number_External_ID__c,
+	SBQQ__Order__r.SBQQ__Quote__r.Quote_External_ID__c,
+	StartDate,
+	Status
+    FROM Contract
+    WHERE SBQQ__Order__r.SBQQ__Quote__r.Migrated_Record__c = TRUE
+    ORDER BY SBQQ__Order__r.Account.Account_Number_External_ID__c, SBQQ__Order__r.SBQQ__Quote__r.Quote_External_ID__c
+    """
+
+    mssql_select_query = """SELECT [account_number_external_id]
+          ,[contract_number]
+          ,[start_date]
+          ,[end_date]
+      FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts]
+      ORDER BY [account_number_external_id], [contract_number]"""
+
+    # set up salesforce connection
+    sf = setup_salesforce_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+    # query salesforce and return the migrated quote
+    contract_query_results = SF_Utils.query_salesforce(sf, sf_contract_query)
+    # convert query results to a dataframe
+    sf_contract_df = SF_Utils.load_query_with_lookups_into_dataframe(contract_query_results)
+    # query mssql contract records
+    mssql_contract_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    # rename mssql column names to match salesforce column names
+    mssql_contract_df.rename(columns = {"account_number_external_id" : "SBQQ__Order__r.Account.Account_Number_External_ID__c",
+                                        "contract_number" : "SBQQ__Order__r.SBQQ__Quote__r.Quote_External_ID__c",
+                                	    "start_date" : "StartDate",
+                                        "end_date" : "EndDate"}, inplace = True)
+    # only compare the mssql staging contracts with what is loaded into salesforce
+    mssql_contract_df = mssql_contract_df[mssql_contract_df['SBQQ__Order__r.SBQQ__Quote__r.Quote_External_ID__c'].isin(sf_contract_df['SBQQ__Order__r.SBQQ__Quote__r.Quote_External_ID__c'])]
+    # add contracted = true
+    mssql_contract_df["Status"] = "Activated"
+    # sort columns in both dataframes to have same contract
+    sf_contract_df = sf_contract_df[sorted(sf_contract_df.columns)]
+    mssql_contract_df = mssql_contract_df[sorted(mssql_contract_df.columns)]
+    # convert mssql column datatypes to be the same as salesforce datatypes
+    mssql_contract_df = mssql_contract_df.astype(sf_contract_df.dtypes)
+    # reset index for comparison
+    sf_contract_df.reset_index(drop=True, inplace = True)
+    mssql_contract_df.reset_index(drop=True, inplace = True)
+    # assert the source table is equal to the target table
+    assert_frame_equal(sf_contract_df, mssql_contract_df)
+
+def test_migrated_contract_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
+    """Description: run this test after the quote lines are migrated into Salesforce.
+    This test can only be run immediately after the quote lines migration are updated.
+    Running before updates will cause a failure.
+    """
+    sf_subscriptions_query = """SELECT
+	SBQQ__EndDate__c,
+	SBQQ__ProductName__c,
+	SBQQ__Quantity__c,
+	SBQQ__QuoteLine__r.QuoteLine_External_ID__c,
+	SBQQ__QuoteLine__r.SBQQ__Quote__r.Quote_External_ID__c,
+	SBQQ__StartDate__c
+    FROM SBQQ__Subscription__c
+    WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True
+    ORDER BY SBQQ__QuoteLine__r.SBQQ__Quote__r.Quote_External_ID__c, SBQQ__QuoteLine__r.QuoteLine_External_ID__c
+    """
+
+    mssql_select_query = """SELECT
+           [CON].[contract_number]
+          ,[contract_line_number]
+          ,[start_date]
+          ,[end_date]
+          ,[product]
+          ,[quantity]
+      FROM [Data_Engineering].[dbo].[STG_SOURCE_Contracts] AS CON
+      INNER JOIN [Data_Engineering].[dbo].[STG_SOURCE_Contract_Lines] AS CON_LINE on [CON].[contract_number] =  [CON_LINE].[contract_number]
+      ORDER BY [CON].[contract_number], [CON_LINE].[contract_line_number]"""
+
+    # set up salesforce connection
+    sf = setup_salesforce_connection
+    # get mssql connection and cursor to interact with mssql tables
+    mssql_connection, mssql_cursor = setup_mssql_connection
+    # query salesforce and return the migrated order
+    subscriptions_query_results = SF_Utils.query_salesforce(sf, sf_subscriptions_query)
+    # convert query results to a dataframe
+    sf_subscriptions_df = SF_Utils.load_query_with_lookups_into_dataframe(subscriptions_query_results)
+    # query mssql order records
+    mssql_subscriptions_df = MSSQL_Utils.query_mssql_return_dataframe(mssql_select_query, mssql_connection)
+    # rename mssql column names to match salesforce column names
+    mssql_subscriptions_df.rename(columns = {"contract_number" : "SBQQ__QuoteLine__r.SBQQ__Quote__r.Quote_External_ID__c",
+                                           "contract_line_number" : "SBQQ__QuoteLine__r.QuoteLine_External_ID__c",
+                                	       "start_date" : "SBQQ__StartDate__c",
+                                           "end_date" : "SBQQ__EndDate__c",
+                                           "product" : "SBQQ__ProductName__c",
+                                           "quantity" : "SBQQ__Quantity__c"}, inplace = True)
+    # only compare the mssql staging orders with what is loaded into salesforce
+    mssql_subscriptions_df = mssql_subscriptions_df[mssql_subscriptions_df['SBQQ__QuoteLine__r.QuoteLine_External_ID__c'].isin(sf_subscriptions_df['SBQQ__QuoteLine__r.QuoteLine_External_ID__c'])]
+    # product mapping from source product name to salesforce product name
+    product_mapping  = {"diesel-large" : "GenWatt Diesel 1000kW",
+                        "diesel-low" : "GenWatt Diesel 10kW",
+                        "diesel-medium" : "GenWatt Diesel 200kW",
+                        "gasoline-large" : "GenWatt Gasoline 2000kW",
+                        "gasoline-low" : "GenWatt Gasoline 300kW",
+                        "gasoline-medium" : "GenWatt Gasoline 750kW",
+                        "install - high" : "Installation: Industrial - High",
+                        "install - low" : "Installation: Industrial - Low",
+                        "install - medium" : "Installation: Industrial - Medium",
+                        "install - portable" : "Installation: Portable",
+                        "propane-large" : "GenWatt Propane 1500kW",
+                        "propane-low" : "GenWatt Propane 100kW",
+                        "propane-medium" : "GenWatt Propane 500kW",
+                        "sla - Bronze" : "SLA: Bronze",
+                        "sla - Gold" : "SLA: Gold",
+                        "sla - Platinum" : "SLA: Platinum",
+                        "sla - Silver" : "SLA: Silver"}
+    # replace products in df with mapped values
+    mssql_subscriptions_df["SBQQ__ProductName__c"] = mssql_subscriptions_df["SBQQ__ProductName__c"].replace(product_mapping)
+    # sort columns in both dataframes to have same order
+    sf_subscriptions_df = sf_subscriptions_df[sorted(sf_subscriptions_df.columns)]
+    mssql_subscriptions_df = mssql_subscriptions_df[sorted(mssql_subscriptions_df.columns)]
+    # convert mssql column datatypes to be the same as salesforce datatypes
+    mssql_subscriptions_df = mssql_subscriptions_df.astype(sf_subscriptions_df.dtypes)
+    # reset index for comparison
+    sf_subscriptions_df.reset_index(drop=True, inplace = True)
+    mssql_subscriptions_df.reset_index(drop=True, inplace = True)
+    # assert the source table is equal to the target table
+    assert_frame_equal(sf_subscriptions_df, mssql_subscriptions_df)
