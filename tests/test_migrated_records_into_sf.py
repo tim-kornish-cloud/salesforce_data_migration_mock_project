@@ -1,8 +1,8 @@
 """
 Author: Timothy Kornish
 CreatedDate: October - 23 - 2026
-Description: setup tests to validate the source data from mysql db
-             is properly setup in mssql database tables.
+Description: setup tests to validate the source data from staging mssql db tables
+             is properly setup in Salesforce objects.
 
 """
 
@@ -19,8 +19,6 @@ MSSQL_Utils = MSSQL_Utilities()
 SF_Utils = Salesforce_Utilities()
 # set up utils instance
 Utils = Custom_Utilities()
-
-pd.set_option('display.max_columns', None)
 
 def test_migrated_accounts(setup_salesforce_connection, setup_mssql_connection):
     """Description: run this test after the account is migrated into Salesforce.
@@ -85,7 +83,7 @@ def test_migrated_accounts(setup_salesforce_connection, setup_mssql_connection):
     assert_frame_equal(sf_accounts_df.reset_index(drop=True), mssql_account_df.reset_index(drop=True))
 
 def test_migrated_contacts(setup_salesforce_connection, setup_mssql_connection):
-    """Description: run this test after the contact is migrated into Salesforce.
+    """Description: run this test after the contacts are migrated into Salesforce.
     This test can be run immediately after the contacts migration or after the entire
     end to end migration process.
     """
@@ -148,7 +146,7 @@ def test_migrated_contacts(setup_salesforce_connection, setup_mssql_connection):
     assert_frame_equal(sf_contacts_df, mssql_contact_df)
 
 def test_migrated_opportunities(setup_salesforce_connection, setup_mssql_connection):
-    """Description: run this test after the opportunity is migrated into Salesforce.
+    """Description: run this test after the opportunities are migrated into Salesforce.
     This test can be run immediately after the opportunities migration or after the entire
     end to end migration process.
 
@@ -295,8 +293,9 @@ def test_migrated_quotes_before_update(setup_salesforce_connection, setup_mssql_
 
 def test_migrated_quote_lines_before_update(setup_salesforce_connection, setup_mssql_connection):
     """Description: run this test after the quote lines are migrated into Salesforce.
-    This test can only be run immediately after the quote migration on insert,
-    running after updates will change the data and cause a failure.
+    This test can be run immediately after the quote migration on insert,
+    running after updates should not cause a failure since updates are to trigger
+    calculation and none of the migrated fields should change.
     """
     sf_quote_lines_query = """SELECT
     QuoteLine_External_ID__c,
@@ -398,7 +397,7 @@ def test_migrated_quote_lines_before_update(setup_salesforce_connection, setup_m
 
 def test_migrated_quotes_after_update(setup_salesforce_connection, setup_mssql_connection):
     """Description: run this test after the quotes are migrated into Salesforce.
-    This test can only be run immediately after the quote migration is updated.
+    This test can only be run after the quote migration is updated.
     Running before updates will cause a failure.
     """
     sf_quote_query = """SELECT
@@ -478,7 +477,7 @@ def test_migrated_quotes_after_update(setup_salesforce_connection, setup_mssql_c
 
 def test_migrated_quote_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
     """Description: run this test after the quote lines are migrated into Salesforce.
-    This test can only be run immediately after the quote lines migration are updated.
+    This test can only be run immediately after the migrated quote lines are updated.
     Running before updates will cause a failure.
     """
     sf_quote_lines_query = """SELECT
@@ -580,7 +579,7 @@ def test_migrated_quote_lines_after_update(setup_salesforce_connection, setup_ms
     assert_frame_equal(sf_quote_lines_df, mssql_quote_lines_df)
 
 def test_migrated_orders_after_update(setup_salesforce_connection, setup_mssql_connection):
-    """Description: run this test after the migrated quotes are ordered and orders generated.
+    """Description: run this test after the generated orders are activated through update.
     This test can only be run after the orders have dates updated, status = activated and contracted = true.
     Running after generated but before updates will cause a failure.
     """
@@ -637,8 +636,8 @@ def test_migrated_orders_after_update(setup_salesforce_connection, setup_mssql_c
     assert_frame_equal(sf_order_df, mssql_order_df)
 
 def test_migrated_order_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
-    """Description: run this test after the quote lines are migrated into Salesforce.
-    This test can only be run immediately after the quote lines migration are updated.
+    """Description: run this test after the order lines are generated in Salesforce.
+    This test can only be run immediately after the order lines are updated.
     Running before updates will cause a failure.
     """
     sf_order_lines_query = """SELECT
@@ -771,9 +770,9 @@ def test_migrated_contracts_after_update(setup_salesforce_connection, setup_mssq
     assert_frame_equal(sf_contract_df, mssql_contract_df)
 
 def test_migrated_contract_lines_after_update(setup_salesforce_connection, setup_mssql_connection):
-    """Description: run this test after the quote lines are migrated into Salesforce.
-    This test can only be run immediately after the quote lines migration are updated.
-    Running before updates will cause a failure.
+    """Description: run this test after the subscriptions are generated in Salesforce.
+    This test can only be run immediately after the contracts are activated through update.
+    Running before contract activation updates may cause a failure.
     """
     sf_subscriptions_query = """SELECT
 	SBQQ__EndDate__c,
