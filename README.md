@@ -236,9 +236,10 @@ System.debug('Deleted old async jobs count: ' + deletedCount);
 	• Contact Email: Your email address
 5. Check the box to Enable OAuth Settings.
 6. Provide a dummy Callback URL (e.g., http://localhost:8080/callback—it is required by Salesforce but not actively used for the JWT flow).
-7. Check the box to Use Digital Signatures.
+7. Check the box to Enable JWT Bearer Flow.
 8. Click Choose File and upload your public certificate file (server.crt).
 9. Add the following Selected OAuth Scopes:
 	• Manage user data via APIs (api)
 	• Perform requests on your behalf at any time (refresh_token, offline_access)
 10. Scroll to the bottom and click Save (it can take up to 10 minutes for the app to activate across Salesforce servers).
+11. go to Setup -> External Client App Manager -> Python_JWT_Integration -> Policies -> add system Administrator to selected profiles.
