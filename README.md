@@ -23,6 +23,7 @@ This repository documents a migration process moving source data from an MySQL d
 * [Add custom fields to objects in Salesforce to track migrated records](#Add-custom-fields-to-objects-in-Salesforce-to-track-migrated-records)
 * [Credentials](#Credentials)
 * [Purge Apex Record Jobs](#Purge-Apex-Record-Jobs)
+* [JWT Connection Setup](#JWT-Connection-Setup)
 
 ## File Structure
 ### Deliverable Documents
@@ -224,3 +225,20 @@ System.debug('Deleted old async jobs count: ' + deletedCount);
 ```
 
 5. execute script purge_record_jobs.py
+
+## JWT Connection Setup
+1. Log into Salesforce org in Lightning mode and click the Gear Icon (top right) -> Setup.
+2. In the Quick Find box on the left, type App Manager and click it.
+3. Click the New External Client App button in the top right corner.
+4. Fill in the Basic Information:
+	• Connected App Name: e.g., Python_JWT_Integration
+	• API Name: (Auto-populates)
+	• Contact Email: Your email address
+5. Check the box to Enable OAuth Settings.
+6. Provide a dummy Callback URL (e.g., http://localhost:8080/callback—it is required by Salesforce but not actively used for the JWT flow).
+7. Check the box to Use Digital Signatures.
+8. Click Choose File and upload your public certificate file (server.crt).
+9. Add the following Selected OAuth Scopes:
+	• Manage user data via APIs (api)
+	• Perform requests on your behalf at any time (refresh_token, offline_access)
+10. Scroll to the bottom and click Save (it can take up to 10 minutes for the app to activate across Salesforce servers).
