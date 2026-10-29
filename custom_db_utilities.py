@@ -60,7 +60,7 @@ class Salesforce_Utilities:
         """
 
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=10))
-    def login_to_salesForce(self, username = "", password = "", security_token = "", environment = "", instance_url = None):
+    def login_to_salesForce(self, username = "", password = "", security_token = "", environment = "", consumer_key = None, privatekey_file = None, domain = None):
         """
         Description: log into a Salesforce or and return salesforce client
                      to operate with.
@@ -77,20 +77,26 @@ class Salesforce_Utilities:
         try:
             # log status to console
             log.info(f"[Logging into source org: {environment}]")
-            if instance_url == None:
+            if consumer_key == None:
                 # log into salesforce using simple_salesforce
                 sf = Salesforce(username = username,
                                 password = password,
                                 security_token = security_token
                                 )
-                # log to console the login was successful. if not successful,
-                # there will be a error from Salesforce on the console
+                # log to console the login was successful.
                 log.info("[Logged in successfully]")
+                # if not successful,
+                # there will be a error from Salesforce on the console
                 # return instance of salesforce to perform operations with
                 return sf
             else:
+                if domain = 'test':
+                    # log into salesforce using simple_salesforce instance_url method
+                    sf = Salesforce(username = username, consumer_key = consumer_key, privatekey_file = privatekey_file, domain = domain)
+                    # return instance of salesforce to perform operations with
+                    return sf
                 # log into salesforce using simple_salesforce instance_url method
-                sf = Salesforce(instance_url = instance_url)
+                sf = Salesforce(username = username, consumer_key = consumer_key, privatekey_file = privatekey_file)
                 # return instance of salesforce to perform operations with
                 return sf
         # exception block - error logging into salesforce
@@ -99,6 +105,7 @@ class Salesforce_Utilities:
             log.exception(f"[Error logging into source org: {environment}...{e}]")
             # exit script since login failed
             sys.exit()
+
     def query_salesforce(self, sf, query, include_deleted = False):
         """
         Description: upload a SOQL query to salesforce and return
