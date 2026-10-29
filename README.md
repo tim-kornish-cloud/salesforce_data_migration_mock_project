@@ -23,6 +23,7 @@ This repository documents a migration process moving source data from an MySQL d
 * [Add custom fields to objects in Salesforce to track migrated records](#Add-custom-fields-to-objects-in-Salesforce-to-track-migrated-records)
 * [Credentials](#Credentials)
 * [Purge Apex Record Jobs](#Purge-Apex-Record-Jobs)
+* [Server key generation](#Server-key-generation)
 * [JWT Connection Setup](#JWT-Connection-Setup)
 
 ## File Structure
@@ -225,6 +226,12 @@ System.debug('Deleted old async jobs count: ' + deletedCount);
 ```
 
 5. execute script purge_record_jobs.py
+
+## Server key generation
+Steps to create a server.crt to upload to salesforce to connect scripts with.
+1. openssl genrsa -des3 -passout pass:SomePassword -out server.pass.key 2048
+2. openssl rsa -passin pass:SomePassword -in server.pass.key -out server.key
+3. openssl req -new -key server.key -out server.csr -x509 -days 365 -out server.crt
 
 ## JWT Connection Setup
 1. Log into Salesforce org in Lightning mode and click the Gear Icon (top right) -> Setup.
