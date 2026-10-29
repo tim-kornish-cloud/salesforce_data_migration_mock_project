@@ -65,16 +65,16 @@ success_file_5 = dir_path + "\\Output\\DELETE\\SUCCESS_5_DELETE_" + sf_environme
 fallout_file_5 = dir_path + "\\Output\\DELETE\\FALLOUT_5_DELETE_" + sf_environment + "_" + object + "_" + sf_database + ".csv"
 
 
-# get credentials for salesforce login
 # get username from credentials
 sf_username = Cred.get_username(sf_database, sf_environment)
-# get password from credentials
-sf_password = Cred.get_password(sf_database, sf_environment)
-# get login token from credentials
-sf_token = Cred.get_token(sf_database, sf_environment)
+# get consumer_key from credentials
+sf_consumer_key = Cred.get_consumer_key(sf_database, sf_environment)
+# get privatekey_file from credentials
+sf_privatekey_file = Cred.get_privatekey_file(sf_database, sf_environment)
 
 # create a instance of simple_salesforce to query and perform operations against salesforce with
-sf = SF_Utils.login_to_salesForce(sf_username, sf_password, sf_token)
+sf = SF_Utils.login_to_salesForce(username = sf_username, consumer_key = sf_consumer_key, privatekey_file = sf_privatekey_file)
+
 
 # query string to select records from salesforce
 order_item_query = "SELECT Id FROM OrderItem WHERE SBQQ__QuoteLine__r.Migrated_Record__c = True OR CreatedBy.Name = 'Timothy Kornish'"

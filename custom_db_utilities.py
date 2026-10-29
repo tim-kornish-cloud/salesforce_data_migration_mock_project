@@ -93,10 +93,14 @@ class Salesforce_Utilities:
                 if domain == 'test':
                     # log into salesforce using simple_salesforce instance_url method
                     sf = Salesforce(username = username, consumer_key = consumer_key, privatekey_file = privatekey_file, domain = domain)
+                    # log to console the login was successful.
+                    log.info("[Logged in successfully]")
                     # return instance of salesforce to perform operations with
                     return sf
                 # log into salesforce using simple_salesforce instance_url method
                 sf = Salesforce(username = username, consumer_key = consumer_key, privatekey_file = privatekey_file)
+                # log to console the login was successful.
+                log.info("[Logged in successfully]")
                 # return instance of salesforce to perform operations with
                 return sf
         # exception block - error logging into salesforce
