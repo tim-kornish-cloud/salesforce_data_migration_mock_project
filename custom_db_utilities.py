@@ -90,7 +90,7 @@ class Salesforce_Utilities:
                 # return instance of salesforce to perform operations with
                 return sf
             else:
-                if domain = 'test':
+                if domain == 'test':
                     # log into salesforce using simple_salesforce instance_url method
                     sf = Salesforce(username = username, consumer_key = consumer_key, privatekey_file = privatekey_file, domain = domain)
                     # return instance of salesforce to perform operations with
